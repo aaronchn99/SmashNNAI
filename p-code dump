@@ -1,0 +1,53 @@
+// Print to browser console
+getlex Qname(PackageNamespace("flash.external"),"ExternalInterface")
+pushstring "console.log"
+// <Print data>
+callpropvoid Qname(PackageNamespace(""),"call") 2
+
+// Method call template
+getlex Qname(PackageNamespace("package name"),"class name")
+getproperty Qname(PackageNamespace(""),"member")
+...
+// Arguments
+callproperty Qname(PackageNamespace(""),"method name") <Argument amount>
+
+// Constructor
+findpropstrict Qname(PackageNamespace("package name"),"classname")
+// Arguments
+constructprop Qname(PackageNamespace(""),"classname") <Argument amount>
+
+// Init socket
+findproperty Qname(PackageNamespace(""),"messageSocket")
+findpropstrict Qname(PackageNamespace("flash.net"),"Socket")
+constructprop Qname(PackageNamespace("flash.net"),"Socket") 0
+initproperty Qname(PackageNamespace(""),"messageSocket")
+
+// Connect socket
+getlex Qname(PackageNamespace("com.mcleodgaming.ssf2"),"Main")
+getproperty Qname(PackageNamespace(""),"messageSocket")
+pushstring "localhost"
+pushint 2802
+callpropvoid Qname(PackageNamespace(""),"connect") 2
+
+// Write to Socket
+getlex Qname(PackageNamespace("com.mcleodgaming.ssf2"),"Main")
+getproperty Qname(PackageNamespace(""),"messageSocket")
+pushstring "Game loaded, initialising game"
+callpropvoid Qname(PackageNamespace(""),"writeUTFBytes") 1
+// Flush socket
+getlex Qname(PackageNamespace("com.mcleodgaming.ssf2"),"Main")
+getproperty Qname(PackageNamespace(""),"messageSocket")
+callpropvoid Qname(PackageNamespace(""),"flush") 0
+
+// For loop
+pushint 0
+setlocal 4
+ofs006b:getlocal 4
+pushint 20
+ifge ofs0083
+getlex Qname(PackageNamespace("com.mcleodgaming.ssf2"),"Main")
+pushstring "Intro Finished"
+callpropvoid Qname(PackageNamespace(""),"sendMessage") 1
+inclocal 4
+jump ofs006b
+ofs0083:label
