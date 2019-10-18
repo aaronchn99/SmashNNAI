@@ -1,0 +1,34 @@
+Windows Users:
+
+Simply run SSF2.exe and have fun!
+
+------------------------------------
+
+Mac OS X / Linux / Other Operating Systems:
+
+Use the included index.htm file to load the game into your Internet browser. If it doesn't work right away, you may need to add the game's folder as a Trusted Location in your Flash Player Settings. See below:
+
+1) Launch SSF2 by opening "index.htm" in the Internet Browser of your choice. (Please note that in Firefox, due to security settings it may not work by default. See here for details on resolving: https://support.mozilla.org/en-US/questions/1172126 )
+
+2) Right-click the SSF2 game window and choose "Global Settings" from the context menu. It should take you to an Adobe Flash Player preferences window or website (if so, proceed to step 3). If the game window appears empty, you may need to install the Adobe Flash Player plugin first. For Mac installation, go here:
+
+https://get.adobe.com/flashplayer/
+
+For Linux OSes, go to the Software & Updates application in your OS, and in the "Other Software" tab check the box next to "Canonical Partners" and close out. Once you've done this, go to your terminal and run:
+
+sudo apt update
+sudo apt install adobe-flashplugin
+
+This should enable the Preferences window when you repeat Step 2 from the beginning.
+
+See below for more:
+
+https://askubuntu.com/questions/765508/how-do-i-install-adobe-flashplayer-in-ubuntu-16-04
+
+Once the Preferences window is available, click the "Advanced" tab. (If you don't see "Advanced" look for a "Global Security Settings" section instead). Then Click the "Trusted Location Settings" button listed under the Developer Tools section.
+
+3) In the security settings page, you must add the directory containing the extracted SSF2 executable (e.g. /path/to/ssf2folder ).
+
+4) Confirm your changes and launch the game again. (Note: You must repeat the above steps if you ever move the game files to another directory)
+
+5) Enjoy!
