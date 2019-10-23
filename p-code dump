@@ -51,3 +51,10 @@ callpropvoid Qname(PackageNamespace(""),"sendMessage") 1
 inclocal 4
 jump ofs006b
 ofs0083:label
+
+// Accessing member attributes and methods
+getlocal_0
+// Push args
+callproperty Qname(PackageNamespace(""),"method name") argcount
+
+getproperty MultinameL([PrivateNamespace("com.mcleodgaming.ssf2.engine:StageData"),PackageNamespace(""),PackageNamespace("com.mcleodgaming.ssf2.util"),PrivateNamespace("StageData.as$515"),PackageNamespace("com.mcleodgaming.ssf2.engine"),PackageInternalNs("com.mcleodgaming.ssf2.engine"),Namespace("http://adobe.com/AS3/2006/builtin"),PackageNamespace("com.mcleodgaming.ssf2.enums"),PackageNamespace("com.adobe.images"),PackageNamespace("com.mcleodgaming.ssf2.assists"),PackageNamespace("com.mcleodgaming.ssf2.audio"),PackageNamespace("com.mcleodgaming.ssf2.enemies"),PackageNamespace("com.mcleodgaming.ssf2.controllers"),PackageNamespace("com.mcleodgaming.ssf2.engine.plugins"),PackageNamespace("com.mcleodgaming.ssf2.engine.plugins.hazards"),PackageNamespace("com.mcleodgaming.ssf2.items"),PackageNamespace("com.mcleodgaming.ssf2.menus"),PackageNamespace("com.mcleodgaming.ssf2.net"),PackageNamespace("com.mcleodgaming.ssf2.platforms"),PackageNamespace("com.mcleodgaming.ssf2.pokemon"),ProtectedNamespace("com.mcleodgaming.ssf2.engine:StageData"),StaticProtectedNs("com.mcleodgaming.ssf2.engine:StageData")])
