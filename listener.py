@@ -1,8 +1,9 @@
 import socket
+import json
 
 ip = "localhost"
 port = 2802
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 2048
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((ip, port))
@@ -17,6 +18,8 @@ while attempts < 10:
 	if not data:
 		attempts += 1
 		continue
-	print("Received data: " + str(data.decode()))
+	# print("Received Data: " + str(data.decode()))
+	dataObj = json.loads(str(data.decode()))
+	print(dataObj["platforms"],dataObj["player"]["x"],dataObj["player"]["y"])
 	attempts = 0
 s.close()

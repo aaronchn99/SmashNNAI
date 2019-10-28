@@ -17,14 +17,13 @@ findpropstrict Qname(PackageNamespace("package name"),"classname")
 constructprop Qname(PackageNamespace(""),"classname") <Argument amount>
 
 // Init socket
-findproperty Qname(PackageNamespace(""),"messageSocket")
-findpropstrict Qname(PackageNamespace("flash.net"),"Socket")
-constructprop Qname(PackageNamespace("flash.net"),"Socket") 0
-initproperty Qname(PackageNamespace(""),"messageSocket")
+findproperty Qname(PackageNamespace("Main"),"messageSocket")
+getlex Qname(PackageNamespace("flash.net"),"Socket")
+construct 0
+setproperty Qname(PackageNamespace(""),"messageSocket")
 
 // Connect socket
-getlex Qname(PackageNamespace("com.mcleodgaming.ssf2"),"Main")
-getproperty Qname(PackageNamespace(""),"messageSocket")
+getlex Qname(PackageNamespace("Main"),"messageSocket")
 pushstring "localhost"
 pushint 2802
 callpropvoid Qname(PackageNamespace(""),"connect") 2
@@ -52,9 +51,17 @@ inclocal 4
 jump ofs006b
 ofs0083:label
 
-// Accessing member attributes and methods
-getlocal_0
-// Push args
-callproperty Qname(PackageNamespace(""),"method name") argcount
 
-getproperty MultinameL([PrivateNamespace("com.mcleodgaming.ssf2.engine:StageData"),PackageNamespace(""),PackageNamespace("com.mcleodgaming.ssf2.util"),PrivateNamespace("StageData.as$515"),PackageNamespace("com.mcleodgaming.ssf2.engine"),PackageInternalNs("com.mcleodgaming.ssf2.engine"),Namespace("http://adobe.com/AS3/2006/builtin"),PackageNamespace("com.mcleodgaming.ssf2.enums"),PackageNamespace("com.adobe.images"),PackageNamespace("com.mcleodgaming.ssf2.assists"),PackageNamespace("com.mcleodgaming.ssf2.audio"),PackageNamespace("com.mcleodgaming.ssf2.enemies"),PackageNamespace("com.mcleodgaming.ssf2.controllers"),PackageNamespace("com.mcleodgaming.ssf2.engine.plugins"),PackageNamespace("com.mcleodgaming.ssf2.engine.plugins.hazards"),PackageNamespace("com.mcleodgaming.ssf2.items"),PackageNamespace("com.mcleodgaming.ssf2.menus"),PackageNamespace("com.mcleodgaming.ssf2.net"),PackageNamespace("com.mcleodgaming.ssf2.platforms"),PackageNamespace("com.mcleodgaming.ssf2.pokemon"),ProtectedNamespace("com.mcleodgaming.ssf2.engine:StageData"),StaticProtectedNs("com.mcleodgaming.ssf2.engine:StageData")])
+// Fallthrough
+getlocal_1
+pushstring "\"fallthrough\":"
+add
+getlocal 6
+getproperty Qname(PackageNamespace(""),"noDropThrough")
+not
+convert_s
+add
+pushstring "}"
+add
+setlocal_1
+debugline 1151
