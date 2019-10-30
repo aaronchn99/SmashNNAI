@@ -5,9 +5,11 @@ ip = "localhost"
 port = 2802
 BUFFER_SIZE = 2048
 
+# Open and bind to socket 2802
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((ip, port))
 
+# Wait for a connection from SSF2
 s.listen(1)
 conn, addr = s.accept()
 print("Connected")
