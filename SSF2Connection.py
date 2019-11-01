@@ -31,13 +31,13 @@ class SSF2Connection(object):
     		return False
 
     	data = str(data.decode()) 	# Decode data
-        if data == "START GAME":
+        if data == "START GAME":    # Indicate start of game
             self.gameStarted = True
             return True
-        elif data == "END GAME":
+        elif data == "END GAME":    # Indicates end of game
             self.gameStarted = False
             return True
-        elif data[0] != "#": # If start symbol not the first character, discard
+        elif data[0] != "#": # If packet start symbol not the first character, discard
             return False
 
         data = data.split('#')[1]	# Only get the first packet (In case 2 packets have been read simultaneously)
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # Demonstrates that up to date game data can be fetched on-demand
     while sock_thread.is_alive():
         if SSF2.gameStarted and SSF2.dataObj is not None:
-            print(SSF2.dataObj["opponent"]["dmg"])
-            time.sleep(1)
+            print(SSF2.dataObj["player"]["jumps"])
+            # time.sleep(1)
 
     sock_thread.join()
