@@ -6,51 +6,53 @@ import threading
 class SSF2Connection(object):
 
     # Initialises parameters for the connection
-    def __init__(self):
-        self.IP = "localhost"
-        self.PORT = 2802
-        self.BUFFER_SIZE = 2048
-        self.dataObj = None
-        self.gameStarted = False
+	def __init__(self):
+		self.IP = "localhost"
+		self.PORT = 2802
+		self.BUFFER_SIZE = 2048
+		self.dataObj = dict()
+		self.gameStarted = False
 
     # Connects to SSF2
-    def connect(self):
-        # Open and bind to socket 2802
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.bind((self.IP, self.PORT))
+	def connect(self):
+		# Open and bind to socket 2802
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock.bind((self.IP, self.PORT))
 
-        # Wait for a connection from SSF2
-        self.sock.listen(1)
-        self.conn, addr = self.sock.accept()
-        print("Successfully connected to SSF2")
+		# Wait for a connection from SSF2
+		self.sock.listen(1)
+		self.conn, addr = self.sock.accept()
+		print("Successfully connected to SSF2")
 
     # Waits for SSF2 to write data packet, then parses it as dataObj
-    def getGameData(self):
-    	data = self.conn.recv(self.BUFFER_SIZE)
-    	if not data:
-    		return False
+	def getGameData(self):
+		data = self.conn.recv(self.BUFFER_SIZE)
+		if not data:
+			return False
 
-    	data = str(data.decode()) 	# Decode data
-        if data == "START GAME":    # Indicate start of game
-            self.gameStarted = True
-            return True
-        elif data == "END GAME":    # Indicates end of game
-            self.gameStarted = False
-            return True
-        elif data[0] != "#": # If packet start symbol not the first character, discard
-            return False
+		data = str(data.decode()) 	# Decode data
+		if len(data) >= 10 and data[:10] == "START GAME":    # Indicate start of game
+			stage = data[10:].strip("()")
+			self.dataObj["stage"] = stage	# Parses stage name
+			self.gameStarted = True
+			return True
+		elif len(data) >= 8 and data[:8] == "END GAME":    # Indicates end of game
+			self.gameStarted = False
+			return True
+		elif data[0] != "#": # If packet start symbol not the first character, discard
+			return False
 
-        data = data.split('#')[1]	# Only get the first packet (In case 2 packets have been read simultaneously)
-        try:
-            self.dataObj = json.loads(data)
-            return True
-        except ValueError: # If invalid JSON, discard it
-            return False
+		data = data.split('#')[1]	# Only get the first packet (In case 2 packets have been read simultaneously)
+		try:
+			self.dataObj.update(dict(json.loads(data)))
+			return True
+		except ValueError: # If invalid JSON, discard it
+			return False
 
     # Safely closes connection
-    def disconnect(self):
-        print("Successfully disconnected")
-        self.sock.close()
+	def disconnect(self):
+		print("Successfully disconnected")
+		self.sock.close()
 
 
 # Threading function that constantly fetches data from SSF2 in the background
@@ -74,7 +76,8 @@ if __name__ == "__main__":
     # Demonstrates that up to date game data can be fetched on-demand
     while sock_thread.is_alive():
         if SSF2.gameStarted and SSF2.dataObj is not None:
-            print(SSF2.dataObj["player"]["jumps"])
+            print(SSF2.dataObj["stage"])
+            # print("%s\t%s" % (SSF2.dataObj["player"]["currentAttack"], SSF2.dataObj["opponent"]["currentAttack"]))
             # time.sleep(1)
 
     sock_thread.join()
