@@ -2,22 +2,9 @@ from pynput.keyboard import Key, Controller
 import time
 
 kb = Controller()
-previnput = list()
-
-def release():
-    print(previnput)
-    if "a" in previnput:
-        kb.release("a")
-        previnput.remove("a")
-    if "s" in previnput:
-        kb.release("s")
-        previnput.remove("s")
-    if "d" in previnput:
-        kb.release("d")
-        previnput.remove("d")
-    if "f" in previnput:
-        kb.release("f")
-        previnput.remove("f")
+previnput = set()
+SHORT = 0.05
+LONG = 0.2
 
 def walkLeft():
     release()
@@ -42,19 +29,43 @@ def crouch():
     kb.press("s")
 
 def stand():
-    release()
-    return
+    return ()
+
+
+''' Jump controls '''
+def jumpLow():
+    kb.press("e")
+    time.sleep(SHORT)
+    kb.release("e")
+
+def jumpHigh():
+    kb.press("e")
+    time.sleep(LONG)
+    kb.release("e")
+
+
+''' A Attack controls '''
+@movement
+def neutralA():
+    kb.press("p")
+    time.sleep(SHORT)
+    kb.release("p")
+    return ()
+
+def jumpTest():
+    for i in range(5):
+        jumpHigh()
+        time.sleep(0.2)
 
 if __name__ == "__main__":
     time.sleep(3)
+    jmpthread.start()
+    for i in range(10):
+        neutralA()
+        time.sleep(0.1)
     walkLeft()
-    time.sleep(1)
+    time.sleep(2)
     walkRight()
-    time.sleep(1)
-    runLeft()
-    time.sleep(1)
-    runRight()
-    time.sleep(1)
-    crouch()
-    time.sleep(1)
+    time.sleep(2)
     stand()
+    jmpthread.join()
