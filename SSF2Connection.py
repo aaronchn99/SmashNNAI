@@ -2,6 +2,7 @@ import socket
 import json
 import time
 import threading
+import copy as cp
 
 class SSF2Connection(object):
 
@@ -25,13 +26,13 @@ class SSF2Connection(object):
 		self.conn, addr = self.sock.accept()
 		print("Successfully connected to SSF2")
 
-	# Returns the dataObject (And locks out the socket thread during the process)
+	# Returns a deep copy of the dataObject (And locks out the socket thread during the process)
 	def copyDataObj(self):
 		# Wait until a packet is available
 		while len(self.dataObj.keys()) == 0:
 			continue
 		self.canFetch = False
-		temp = self.dataObj
+		temp = cp.deepcopy(self.dataObj)
 		self.canFetch = True
 		return temp
 

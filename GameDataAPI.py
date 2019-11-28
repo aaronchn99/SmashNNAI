@@ -35,7 +35,10 @@ class Character(object):
 
 	@property
 	def pos(self):
-		return (currentData[self.charType]["x"], currentData[self.charType]["y"])
+		if not currentData[self.charType]["ko"]:
+			return (currentData[self.charType]["x"], currentData[self.charType]["y"])
+		else:
+			return (-100, -100)
 
 	@property
 	def dim(self):
@@ -124,11 +127,11 @@ def applyOffset(offset):
 	currentData["cambounds"]["x1"] += offset[0]
 	currentData["cambounds"]["y0"] += offset[1]
 	currentData["cambounds"]["y1"] += offset[1]
-	# Apply to player and opponent positions
-	currentData["player"]["x"] += offset[0]
-	currentData["player"]["y"] += offset[1]
-	currentData["opponent"]["x"] += offset[0]
-	currentData["opponent"]["y"] += offset[1]
+	# Apply to player and opponent positions (Also align position point to top middle)
+	currentData["player"]["x"] += offset[0] - currentData["player"]["w"]/2
+	currentData["player"]["y"] += offset[1] - currentData["player"]["h"]
+	currentData["opponent"]["x"] += offset[0] - currentData["opponent"]["w"]/2
+	currentData["opponent"]["y"] += offset[1] - currentData["opponent"]["h"]
 	# Apply to platform positions
 	for p in platforms():
 		p["x"] += offset[0]
@@ -137,6 +140,8 @@ def applyOffset(offset):
 def updateAPI():
 	global currentData, posOffset
 	currentData = SSF2.copyDataObj()
+	if stage() == "warioware":
+		currentData["platforms"] = currentData["platforms"][:4]
 	offset = (-cambounds()["x0"], -cambounds()["y0"])
 	applyOffset(offset)
 	player.update()
