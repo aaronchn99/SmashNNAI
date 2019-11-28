@@ -12,6 +12,7 @@ class SSF2Connection(object):
 		self.BUFFER_SIZE = 2048
 		self.dataObj = dict()
 		self.gameStarted = False
+		self.canFetch = True
 
 	# Connects to SSF2
 	def connect(self):
@@ -24,8 +25,21 @@ class SSF2Connection(object):
 		self.conn, addr = self.sock.accept()
 		print("Successfully connected to SSF2")
 
+	# Returns the dataObject (And locks out the socket thread during the process)
+	def copyDataObj(self):
+		# Wait until a packet is available
+		while len(self.dataObj.keys()) == 0:
+			continue
+		self.canFetch = False
+		temp = self.dataObj
+		self.canFetch = True
+		return temp
+
 	# Waits for SSF2 to write data packet, then parses it as dataObj
 	def getGameData(self):
+		# Wait for API to finish copying dataObj
+		while not self.canFetch:
+			continue
 		data = self.conn.recv(self.BUFFER_SIZE)
 		if not data:
 			return False
