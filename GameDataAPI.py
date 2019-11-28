@@ -22,7 +22,8 @@ class Character(object):
 	def update(self):
 		charData = currentData[self.charType]	# Update current character data
 		# Suppress jump if a suppressing move jump has been made
-		if charData["currentAttack"] is not None and charData["currentAttack"] in suppressJumpMoves[charData["name"]]:
+		# if charData["currentAttack"] is not None and charData["currentAttack"] in suppressJumpMoves[charData["name"]]:
+		if charData["currentAttack"] is not None and charData["currentAttack"] == "b_up":
 			self.suppressJump = True
 		# Unsuppress jump when landed
 		if self.suppressJump and currentData[self.charType]["land"]:
