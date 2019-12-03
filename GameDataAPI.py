@@ -6,9 +6,9 @@ currentData = dict()
 
 suppressJumpMoves = {
 	"mario":("b_up", "b_up_air"),
-	"meta_knight":("b_up", "b_up_air"),
+	"meta_knight":("b_up", "b_up_air", "b", "b_air"),
 	"dkong":("b_up", "b_up_air"),
-	"falco":("b_up", "b_up_air"),
+	"falco":("b_up", "b_up_air", "b_forward", "b_forward_air"),
 	"kirby":("b_up", "b_up_air")
 }
 
@@ -22,11 +22,12 @@ class Character(object):
 	def update(self):
 		charData = currentData[self.charType]	# Update current character data
 		# Suppress jump if a suppressing move jump has been made
-		# if charData["currentAttack"] is not None and charData["currentAttack"] in suppressJumpMoves[charData["name"]]:
-		if charData["currentAttack"] is not None and charData["currentAttack"] == "b_up":
-			self.suppressJump = True
+		if charData["name"] in suppressJumpMoves.keys():
+			if charData["currentAttack"] is not None and charData["currentAttack"] in suppressJumpMoves[charData["name"]]:
+		# if charData["currentAttack"] is not None and charData["currentAttack"] == "b_up":
+				self.suppressJump = True
 		# Unsuppress jump when landed
-		if self.suppressJump and currentData[self.charType]["land"]:
+		if self.suppressJump and (currentData[self.charType]["land"] or self.ko):
 			self.suppressJump = False
 
 	@property
@@ -78,6 +79,46 @@ class Character(object):
 	@property
 	def attacking(self):
 		return currentData[self.charType]["attacking"]
+
+	@property
+	def attack(self):
+		return currentData[self.charType]["currentAttack"]
+
+	@property
+	def dashing(self):
+		return currentData[self.charType]["dashing"]
+
+	@property
+	def grabbing(self):
+		return currentData[self.charType]["grab"]
+
+	@property
+	def dodging(self):
+		return currentData[self.charType]["dodge"]
+
+	@property
+	def dizzy(self):
+		return currentData[self.charType]["dizzy"]
+
+	@property
+	def knocked_down(self):
+		return currentData[self.charType]["incap"]
+
+	@property
+	def invincible(self):
+		return currentData[self.charType]["invincible"]
+
+	@property
+	def crouching(self):
+		return currentData[self.charType]["crouch"]
+
+	@property
+	def ko(self):
+		return currentData[self.charType]["ko"]
+
+	@property
+	def facing_right(self):
+		return currentData[self.charType]["faceright"]
 
 
 class Player(Character):
