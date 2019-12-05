@@ -130,6 +130,24 @@ class Player(Character):
 	def __init__(self):
 		super().__init__("player")
 
+	@property
+	def pressedButtons(self):
+		playerInput = currentData[self.charType]["inputs"]
+		buttons = {
+			"up":playerInput["UP"],
+			"down":playerInput["DOWN"],
+			"left":playerInput["LEFT"],
+			"right":playerInput["RIGHT"],
+			"jump":playerInput["JUMP"],
+			"dash":playerInput["DASH"],
+			"a":playerInput["BUTTON2"],
+			"b":playerInput["BUTTON1"],
+			"grab":playerInput["GRAB"],
+			"shield":playerInput["SHIELD"],
+			"taunt":playerInput["TAUNT"]
+		}
+		return buttons
+
 
 class Opponent(Character):
 	def __init__(self):
@@ -258,5 +276,5 @@ if __name__ == "__main__":
 	while isActive():
 		if inGame():
 			updateAPI()
-			print(player.jumps)
+			print(player.pressedButtons)
 	joinHandler()

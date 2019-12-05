@@ -92,8 +92,8 @@ if __name__ == "__main__":
 	while sock_thread.is_alive():
 		if SSF2.gameStarted and SSF2.dataObj is not None:
 			pass
-			# print(SSF2.dataObj["stage"])
-			print("%s\t%s" % (SSF2.dataObj["player"]["name"], SSF2.dataObj["player"]["currentAttack"]))
+			print(SSF2.dataObj["player"]["inputs"])
+			# print("%s\t%s" % (SSF2.dataObj["player"]["name"], SSF2.dataObj["player"]["currentAttack"]))
 			# time.sleep(1)
 
 	sock_thread.join()
