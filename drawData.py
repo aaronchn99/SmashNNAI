@@ -1,7 +1,6 @@
 import GameDataAPI as gd
 import pygame
 import os
-import numpy as np
 
 pygame.init()
 START_RES = (500,500)
