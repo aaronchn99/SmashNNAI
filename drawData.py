@@ -1,6 +1,7 @@
 import GameDataAPI as gd
 import pygame
 import os
+import numpy as np
 
 pygame.init()
 START_RES = (500,500)
@@ -15,31 +16,7 @@ def init():
     # Window resolution is now the size of the cambounds
     stageRes = (gd.cambounds()["x1"], gd.cambounds()["y1"])
     window = pygame.display.set_mode(stageRes)
-    # Get stage platform images
-    if gd.stage() == "battlefield":
-        filename = "battlefieldplats.png"
-    elif gd.stage() == "finaldestination":
-        filename = "finaldestplats.png"
-    elif gd.stage() == "pacmaze":
-        filename = "pacmazeplats.png"
-    elif gd.stage() == "dreamland":
-        filename = "dreamlandplats.png"
-    elif gd.stage() == "bombfactory":
-        filename = "bombfactplats.png"
-    elif gd.stage() == "nintendo3ds":
-        filename = "3dsplats.png"
-    elif gd.stage() == "rainbowroute":
-        filename = "rainbowplats.png"
-    elif gd.stage() == "warioware":
-        filename = "warioplats.png"
-    elif gd.stage() == "kingdom2":
-        filename = "mush2plats.png"
-    else:
-        filename = ""
-    if filename != "":
-        background = pygame.image.load(os.path.join(curDir,"platforms",filename))
-        background = pygame.transform.scale(background, (background.get_width(), stageRes[1]))
-
+    # Now stuff has been initialised
     hasInit = True
 
 '''Main driver code'''
@@ -58,10 +35,8 @@ if __name__ == "__main__":
                 init()
 
             # Main update stage
-            if background is not None:
-                bgrect = background.get_rect()
-                bgrect.center = window.get_rect().center
-                window.blit(background, bgrect)
+            for t in gd.terrain():
+                window.blit(t.img, t.pos)
             for p in gd.platforms():
                 pygame.draw.rect(window, (255, 0, 255, 25), pygame.Rect(p["x"],p["y"],p["w"],p["h"]))
             pygame.draw.rect(window, (0, 0, 255, 25), pygame.Rect(gd.player.pos, gd.player.dim))

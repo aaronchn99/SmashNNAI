@@ -1,8 +1,13 @@
 from SSF2Connection import *
+from PIL import Image
+import numpy as np
+import os
+import pygame
 
 SSF2 = SSF2Connection() # Connection object to SSF2
 sock_thread = threading.Thread(target=socket_threading, args=(SSF2,))   # Thread that handles the Connection in the background
 currentData = dict()
+curDir = os.path.dirname(os.path.realpath(__file__))
 
 suppressJumpMoves = {
 	"mario":("b_up", "b_up_air"),
@@ -130,14 +135,47 @@ class Opponent(Character):
 	def __init__(self):
 		super().__init__("opponent")
 
+
+class Terrain(object):
+	def __init__(self, pos, filename):
+		image = Image.open(os.path.join(curDir, "platforms", filename))
+		self.imgarray = np.array(image)
+		image.close()
+		self.pos = pos	# Top-left position
+		# Load pygame image
+		self.pygame_img = pygame.image.load(os.path.join(curDir,"platforms",filename))
+
+	@property
+	def img(self):
+		return self.pygame_img
+
+
+# Characters
 player = Player()
 opponent = Opponent()
+
+# Terrains
+threeDS = Terrain((235, 362), "3dsplats.png")
+battlefield = Terrain((322, 460), "battlefieldplats.png")
+bombfact = Terrain((0, 333), "bombfactplats.png")
+dreamland = Terrain((354, 615), "dreamlandplats.png")
+finaldest = Terrain((326, 455), "finaldestplats.png")
+mush2_1 = Terrain((0, 328), "mush2plat1.png")
+mush2_2 = Terrain((378, 380), "mush2plat2.png")
+mush2_3 = Terrain((741, 328), "mush2plat3.png")
+pacmaze = Terrain((404, 353), "pacmazeplats.png")
+rainbow = Terrain((236, 557), "rainbowplats.png")
+wario = Terrain((271, 453), "warioplats.png")
+
 
 def isActive():
 	return sock_thread.is_alive()
 
 def inGame():
 	return SSF2.gameStarted
+
+def stage():
+	return currentData["stage"]
 
 def deathbounds():
 	return currentData["deathbounds"]
@@ -148,8 +186,28 @@ def cambounds():
 def platforms():
 	return currentData["platforms"]
 
-def stage():
-	return currentData["stage"]
+def terrain():
+	if stage() == "battlefield":
+		return [battlefield]
+	elif stage() == "finaldestination":
+		return [finaldest]
+	elif stage() == "pacmaze":
+		return [pacmaze]
+	elif stage() == "dreamland":
+		return [dreamland]
+	elif stage() == "bombfactory":
+		return [bombfact]
+	elif stage() == "nintendo3ds":
+		return [threeDS]
+	elif stage() == "rainbowroute":
+		return [rainbow]
+	elif stage() == "warioware":
+		return [wario]
+	elif stage() == "kingdom2":
+		return [mush2_1, mush2_2, mush2_3]
+	else:
+		return []
+
 
 ''' API control functions '''
 # Starts up all objects required by API (Connection and its handler)
