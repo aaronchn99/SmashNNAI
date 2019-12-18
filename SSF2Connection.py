@@ -57,6 +57,7 @@ class SSF2Connection(object):
 			return False
 		self.gameStarted = True
 		data = data.split('#')[1]	# Only get the first packet (In case 2 packets have been read simultaneously)
+		# print(data)
 		try:
 			self.dataObj.update(dict(json.loads(data)))
 			return True
