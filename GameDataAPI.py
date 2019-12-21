@@ -268,7 +268,7 @@ def updateAPI():
 # It's active when the connection handler thread is still running
 # (which stops when the connection is broken i.e. game has stopped)
 
-def joinHandler():
+def stopAPI():
 	sock_thread.join()
 
 if __name__ == "__main__":
@@ -277,4 +277,4 @@ if __name__ == "__main__":
 		if inGame():
 			updateAPI()
 			print(player.pressedButtons)
-	joinHandler()
+	stopAPI()
