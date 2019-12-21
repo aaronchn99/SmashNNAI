@@ -47,5 +47,5 @@ if __name__ == "__main__":
 
         pygame.display.flip()   # Swap frame buffers and draw completed frame to display
 
-gd.joinHandler()
+gd.stopAPI()
 pygame.quit()
