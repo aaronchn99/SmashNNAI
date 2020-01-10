@@ -14,7 +14,7 @@ def init():
     global background, hasInit, window, stageRes
     # Window resolution is now the size of the cambounds
     stageRes = (gd.cambounds()["x1"], gd.cambounds()["y1"])
-    window = pygame.display.set_mode(stageRes)
+    window = pygame.display.set_mode(START_RES)
     # Now stuff has been initialised
     hasInit = True
 
@@ -33,16 +33,23 @@ if __name__ == "__main__":
             if not hasInit:
                 init()
 
+            frame = pygame.Surface(stageRes)
+            frame.fill(WHITE)
             # Main update stage
             for t in gd.terrain():
-                window.blit(t.img, t.pos)
+                frame.blit(t.img, t.pos)
             for p in gd.platforms():
-                pygame.draw.rect(window, (255, 0, 255, 25), pygame.Rect(p["x"],p["y"],p["w"],p["h"]))
-            pygame.draw.rect(window, (0, 0, 255, 25), pygame.Rect(gd.player.pos, gd.player.dim))
-            pygame.draw.rect(window, (0, 0, 255, 25), pygame.Rect(gd.opponent.pos, gd.opponent.dim))
-            window.blit(font.render(str(stageRes), True, (0,0,0)), (150,150))
+                pygame.draw.rect(frame, (255, 0, 255, 25), pygame.Rect(p["x"],p["y"],p["w"],p["h"]))
+            pygame.draw.rect(frame, (0, 255, 0, 25), pygame.Rect(gd.player.pos, gd.player.dim))
+            pygame.draw.rect(frame, (0, 0, 255, 25), pygame.Rect(gd.opponent.pos, gd.opponent.dim))
+
+            # frame2 = pygame.transform.scale(frame, (int(stageRes[0]/(gd.player.dim[0]/2)),int(stageRes[1]/(gd.player.dim[1]/2))))
+            frame3 = pygame.transform.scale(frame, (100,100))
+            pygame.transform.scale(frame3, START_RES, window)
+
+            window.blit(font.render(str(stageRes), True, (0,0,0)), (0,0))
         else:
-            window.blit(font.render("Not In Game", True, (0,0,0)), (150,150))
+            window.blit(font.render("Not In Game", True, (0,0,0)), (0,0))
             hasInit = False
 
         pygame.display.flip()   # Swap frame buffers and draw completed frame to display
