@@ -276,5 +276,5 @@ if __name__ == "__main__":
 	while isActive():
 		if inGame():
 			updateAPI()
-			print(player.pressedButtons)
+			print(player.shieldPow)
 	stopAPI()
