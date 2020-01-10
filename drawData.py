@@ -14,7 +14,7 @@ def init():
     global background, hasInit, window, stageRes
     # Window resolution is now the size of the cambounds
     stageRes = (gd.cambounds()["x1"], gd.cambounds()["y1"])
-    window = pygame.display.set_mode((stageRes[0]*20, stageRes[1]*20))
+    window = pygame.display.set_mode(START_RES)
     # Now stuff has been initialised
     hasInit = True
 
@@ -42,10 +42,11 @@ if __name__ == "__main__":
                 pygame.draw.rect(frame, (255, 0, 255, 25), pygame.Rect(p["x"],p["y"],p["w"],p["h"]))
             pygame.draw.rect(frame, (0, 255, 0, 25), pygame.Rect(gd.player.pos, gd.player.dim))
             pygame.draw.rect(frame, (0, 0, 255, 25), pygame.Rect(gd.opponent.pos, gd.opponent.dim))
-            pygame.transform.scale(frame, (stageRes[0]*20, stageRes[1]*20), window)
-            window.blit(font.render(str(stageRes), True, (0,0,0)), (150,150))
+            frame2 = pygame.transform.scale(frame, (100, 100))
+            pygame.transform.scale(frame2, START_RES, window)
+            window.blit(font.render(str(stageRes), True, (0,0,0)), (0,0))
         else:
-            window.blit(font.render("Not In Game", True, (0,0,0)), (150,150))
+            window.blit(font.render("Not In Game", True, (0,0,0)), (0,0))
             hasInit = False
 
         pygame.display.flip()   # Swap frame buffers and draw completed frame to display
