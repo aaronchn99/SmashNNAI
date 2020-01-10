@@ -1,12 +1,14 @@
 from SSF2Connection import *
 from PIL import Image
 import numpy as np
+import math
 import os
 import pygame
 
 SSF2 = SSF2Connection() # Connection object to SSF2
 sock_thread = threading.Thread(target=socket_threading, args=(SSF2,))   # Thread that handles the Connection in the background
 currentData = dict()
+normalsf = list()
 curDir = os.path.dirname(os.path.realpath(__file__))
 
 suppressJumpMoves = {
@@ -155,24 +157,36 @@ class Opponent(Character):
 
 
 class Terrain(object):
-	def __init__(self, pos, filename):
-		image = Image.open(os.path.join(curDir, "platforms", filename))
-		self.imgarray = np.array(image)
-		image.close()
+	def __init__(self, pos, filename=""):
+		if filename != "":
+			image = Image.open(os.path.join(curDir, "platforms", filename))
+			self.imgarray = np.array(image)
+			image.close()
+			# Load pygame image
+			self.pygame_img = pygame.image.load(os.path.join(curDir,"platforms",filename))
 		self.pos = pos	# Top-left position
-		# Load pygame image
-		self.pygame_img = pygame.image.load(os.path.join(curDir,"platforms",filename))
 
 	@property
 	def img(self):
 		return self.pygame_img
+
+	def normalise(self, xsf, ysf):
+		self.pos = (round(self.pos[0]/xsf), round(self.pos[1]/ysf))
+		new_dim = (round(self.pygame_img.get_width()/xsf), round(self.pygame_img.get_height()/ysf))
+		self.pygame_img = pygame.transform.smoothscale(self.pygame_img, new_dim)
+
+	def copy(self):
+		cloneTerrain = Terrain(self.pos)
+		cloneTerrain.imgarray = self.imgarray
+		cloneTerrain.pygame_img = self.pygame_img.copy()
+		return cloneTerrain
 
 
 # Characters
 player = Player()
 opponent = Opponent()
 
-# Terrains
+# Terrains (Original copies)
 threeDS = Terrain((235, 362), "3dsplats.png")
 battlefield = Terrain((322, 460), "battlefieldplats.png")
 bombfact = Terrain((0, 333), "bombfactplats.png")
@@ -205,26 +219,29 @@ def platforms():
 	return currentData["platforms"]
 
 def terrain():
+	terrains = list()
 	if stage() == "battlefield":
-		return [battlefield]
+		terrains = [battlefield.copy()]
 	elif stage() == "finaldestination":
-		return [finaldest]
+		terrains = [finaldest.copy()]
 	elif stage() == "pacmaze":
-		return [pacmaze]
+		terrains = [pacmaze.copy()]
 	elif stage() == "dreamland":
-		return [dreamland]
+		terrains = [dreamland.copy()]
 	elif stage() == "bombfactory":
-		return [bombfact]
+		terrains = [bombfact.copy()]
 	elif stage() == "nintendo3ds":
-		return [threeDS]
+		terrains = [threeDS.copy()]
 	elif stage() == "rainbowroute":
-		return [rainbow]
+		terrains = [rainbow.copy()]
 	elif stage() == "warioware":
-		return [wario]
+		terrains = [wario.copy()]
 	elif stage() == "kingdom2":
-		return [mush2_1, mush2_2, mush2_3]
-	else:
-		return []
+		terrains = [mush2_1.copy(), mush2_2.copy(), mush2_3.copy()]
+
+	for t in terrains:
+		t.normalise(normalsf[0], normalsf[1])
+	return terrains
 
 
 ''' API control functions '''
@@ -233,6 +250,8 @@ def startAPI():
 	SSF2.connect()
 	sock_thread.start()
 
+# API update functions
+# Shifts objects so that cambounds' top left corner is the origin
 def applyOffset(offset):
 	# Apply to deathbounds
 	currentData["deathbounds"]["x0"] += offset[0]
@@ -254,13 +273,47 @@ def applyOffset(offset):
 		p["x"] += offset[0]
 		p["y"] += offset[1]
 
+# Scales down all objects (So that NN can digest it)
+def normaliseSize(xsf, ysf):
+	# Camera bounds
+	currentData["cambounds"]["x1"] = round(currentData["cambounds"]["x1"]/xsf)
+	currentData["cambounds"]["y1"] = round(currentData["cambounds"]["y1"]/ysf)
+	# Death Bounds
+	currentData["deathbounds"]["x0"] = round(currentData["deathbounds"]["x0"]/xsf)
+	currentData["deathbounds"]["x1"] = round(currentData["deathbounds"]["x1"]/xsf)
+	currentData["deathbounds"]["y0"] = round(currentData["deathbounds"]["y0"]/ysf)
+	currentData["deathbounds"]["y1"] = round(currentData["deathbounds"]["y1"]/ysf)
+	# Player
+	currentData["player"]["x"] = round(currentData["player"]["x"]/xsf)
+	currentData["player"]["y"] = round(currentData["player"]["y"]/ysf)
+	currentData["player"]["w"] = round(currentData["player"]["w"]/xsf)
+	currentData["player"]["h"] = round(currentData["player"]["h"]/ysf)
+	# Opponent
+	currentData["opponent"]["x"] = round(currentData["opponent"]["x"]/xsf)
+	currentData["opponent"]["y"] = round(currentData["opponent"]["y"]/ysf)
+	currentData["opponent"]["w"] = round(currentData["opponent"]["w"]/xsf)
+	currentData["opponent"]["h"] = round(currentData["opponent"]["h"]/ysf)
+	# Platforms
+	for p in platforms():
+		p["x"] = round(p["x"]/xsf)
+		p["y"] = round(p["y"]/ysf)
+		p["w"] = round(p["w"]/xsf)
+		p["h"] = round(p["h"]/ysf)
+
+# Updates API data before it can be used (Call this before fetching data from API)
 def updateAPI():
-	global currentData, posOffset
-	currentData = SSF2.copyDataObj()
+	global currentData, normalsf
+	currentData = SSF2.copyDataObj()	# Fetch a copy of game data
+	# Remove the main stage area from Warioware
 	if stage() == "warioware":
 		currentData["platforms"] = currentData["platforms"][:4]
+	# Shift objects
 	offset = (-cambounds()["x0"], -cambounds()["y0"])
 	applyOffset(offset)
+	# Scale down objects
+	normalsf = (round(player.dim[0]/2), round(player.dim[1]/2))
+	normaliseSize(normalsf[0], normalsf[1])
+	# Update player and opponent objects
 	player.update()
 	opponent.update()
 
