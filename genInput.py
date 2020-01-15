@@ -1,15 +1,17 @@
 import GameDataAPI as gd
 import numpy as np
-import matplotlib.pyplot as plt
 import pygame
-# import cv2
+import cv2
+import math as m
 
 pygame.init()
 START_RES = (500,500)
 IMG_SIZE = (100,100)
 WHITE = (255,255,255)
 BLACK = (0,0,0)
-hasInit = False
+gameInit = False
+playerMaxStock = 0
+oppMaxStock = 0
 
 # Generate 2 images, the player to platforms and the player to opponent
 def getImg():
@@ -39,6 +41,10 @@ def getImg():
     plat_img = pygame.transform.scale(plat_img, IMG_SIZE)
     opp_img = pygame.transform.scale(opp_img, IMG_SIZE)
 
+    # # Scale for visualisation
+    # plat_img = pygame.transform.scale(plat_img, START_RES)
+    # opp_img = pygame.transform.scale(opp_img, START_RES)
+
     # Normalise pixel values to 0.0 - 1.0 range
     plat_img_array = pygame.surfarray.array2d(plat_img).swapaxes(0,1) / 16777215.0
     opp_img_array = pygame.surfarray.array2d(opp_img).swapaxes(0,1) / 16777215.0
@@ -54,26 +60,82 @@ if __name__ == "__main__":
 
         if gd.inGame():
             gd.updateAPI()
-
-            inputs = dict()
-            inputs["platimg"], inputs["oppimg"] = getImg()
-
-            # plt.imshow(inputs["platimg"])
-            # plt.colorbar()
-            # plt.show()
-            # plt.imshow(inputs["oppimg"])
-            # plt.colorbar()
-            # plt.show()
-
-            # cv2.imshow("plat", inputs["platimg"])
-            # cv2.imshow("opp", inputs["oppimg"])
+            # Initialise stuff when starting game
+            if not gameInit:
+                playerMaxStock = gd.player.lives
+                oppMaxStock = gd.opponent.lives
+                gameInit = True
 
             ''' Player data '''
+            # Continuous inputs
+            data = np.array( \
+                # Stock
+                [gd.player.lives/playerMaxStock,   \
+                # Damage taken
+                m.tanh(gd.player.damage/100),    \
+                # Shield power
+                gd.player.shieldPow/100,       \
+                # Horizontal distance from left stage boundary
+                (gd.player.pos[0] - gd.deathbounds()["x0"])/(gd.deathbounds()["x1"] - gd.deathbounds()["x0"]),  \
+                # Horizontal distance from right stage boundary
+                (gd.deathbounds()["x1"] - gd.player.pos[0])/(gd.deathbounds()["x1"] - gd.deathbounds()["x0"]),  \
+                # Vertical distance from up stage boundary
+                (gd.player.pos[1] - gd.deathbounds()["y0"])/(gd.deathbounds()["y1"] - gd.deathbounds()["y0"]),  \
+                # Vertical distance from down stage boundary
+                (gd.deathbounds()["y1"] - gd.player.pos[1])/(gd.deathbounds()["y1"] - gd.deathbounds()["y0"])  \
+                ]   \
+            )
             # Binary inputs
-            inputs["shielding"] = gd.player.shielding
-            inputs["attacking"] = gd.player.attacking
-            inputs["land"] = gd.player.onLand
+            data = np.append(data, \
+                [gd.player.shielding,   \
+                gd.player.attacking,    \
+                gd.player.onLand,       \
+                gd.player.crouching,    \
+                gd.player.onLedge,      \
+                gd.player.grabbing,     \
+                gd.player.dodging,      \
+                gd.player.dizzy,        \
+                gd.player.knocked_down, \
+                gd.player.invincible,   \
+                gd.player.ko,           \
+                gd.player.dashing       \
+                ]                       \
+            )
+            # Attack inputs (Also Binary)
+            data = np.append(data, \
+                [                   \
+                    # Neutral A
+                    gd.player.attack == "a",   \
+                    # Down A
+                    gd.player.attack == "crouch_attack",   \
+                    # Left A
+                    gd.player.attack == "a_forward_tilt" and not gd.player.facing_right,   \
+                    # Right A
+                    gd.player.attack == "a_forward_tilt" and gd.player.facing_right,   \
+                    # Left Dash A
+                    gd.player.attack == "a_forward" and not gd.player.facing_right,   \
+                    # Right Dash A
+                    gd.player.attack == "a_forward" and gd.player.facing_right,   \
+                ]                   \
+            )
 
-# cv2.destroyAllWindows()
+            ''' Opponent data '''
+
+
+            ''' Image data '''
+            platimg, oppimg = getImg()
+            imgs = np.concatenate((platimg, oppimg), axis=None)
+
+            ''' Show inputs '''
+            dataview = data.view()
+            for i in range(dataview.size % IMG_SIZE[0], IMG_SIZE[0]):
+                dataview = np.append(dataview, 0)
+            view = np.concatenate((imgs, dataview))
+            cv2.imshow("inputs", np.reshape(view, (-1,IMG_SIZE[0])))
+            cv2.waitKey(25)
+        else:
+            gameInit = False
+
+cv2.destroyAllWindows()
 gd.stopAPI()
 pygame.quit()

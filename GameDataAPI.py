@@ -1,5 +1,4 @@
 from SSF2Connection import *
-from PIL import Image
 import numpy as np
 import os
 import pygame
@@ -42,13 +41,13 @@ class Character(object):
 	@property
 	def pos(self):
 		if not currentData[self.charType]["ko"]:
-			return (currentData[self.charType]["x"], currentData[self.charType]["y"])
+			return (int(currentData[self.charType]["x"]), int(currentData[self.charType]["y"]))
 		else:
-			return (-100, -100)
+			return (currentData["deathbounds"]["x0"], currentData["deathbounds"]["y0"])	# If KO, set position onto death boundary
 
 	@property
 	def dim(self):
-		return (currentData[self.charType]["w"], currentData[self.charType]["h"])
+		return (int(currentData[self.charType]["w"]), int(currentData[self.charType]["h"]))
 
 	@property
 	def lives(self):
@@ -156,9 +155,6 @@ class Opponent(Character):
 
 class Terrain(object):
 	def __init__(self, pos, filename):
-		image = Image.open(os.path.join(curDir, "platforms", filename))
-		self.imgarray = np.array(image)
-		image.close()
 		self.pos = pos	# Top-left position
 		# Load pygame image
 		self.pygame_img = pygame.image.load(os.path.join(curDir,"platforms",filename))
