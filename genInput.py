@@ -2,6 +2,7 @@ import GameDataAPI as gd
 import numpy as np
 import matplotlib.pyplot as plt
 import pygame
+# import cv2
 
 pygame.init()
 START_RES = (500,500)
@@ -54,14 +55,25 @@ if __name__ == "__main__":
         if gd.inGame():
             gd.updateAPI()
 
-            plat_img_array, opp_img_array = getImg()
+            inputs = dict()
+            inputs["platimg"], inputs["oppimg"] = getImg()
 
-            # plt.imshow(plat_img_array)
+            # plt.imshow(inputs["platimg"])
             # plt.colorbar()
             # plt.show()
-            # plt.imshow(opp_img_array)
+            # plt.imshow(inputs["oppimg"])
             # plt.colorbar()
             # plt.show()
 
+            # cv2.imshow("plat", inputs["platimg"])
+            # cv2.imshow("opp", inputs["oppimg"])
+
+            ''' Player data '''
+            # Binary inputs
+            inputs["shielding"] = gd.player.shielding
+            inputs["attacking"] = gd.player.attacking
+            inputs["land"] = gd.player.onLand
+
+# cv2.destroyAllWindows()
 gd.stopAPI()
 pygame.quit()
