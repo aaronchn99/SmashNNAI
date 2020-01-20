@@ -5,6 +5,7 @@ kb = Controller()
 previnput = set()
 SHORT = 0.05
 LONG = 0.2
+FRAMEINT = 0.05
 keyspressed = set()
 
 keystate1 = {"w":False,"a":False,"s":False,"d":False,"e":False,"f":False,"p":False,"o":False,"i":False,"l":False,"k":False}
@@ -107,7 +108,7 @@ keyfuncs = {"w":W,"a":A,"s":S,"d":D,"e":E,"f":F,"p":P,"o":O,"i":I,"l":L,"k":K}
 def applyKeyState(keystates):
     for key in keystates.keys():
         keyfuncs[key](keystates[key])
-    time.sleep(0.05)
+    time.sleep(FRAMEINT)
 
 if __name__ == "__main__":
     time.sleep(2)
