@@ -1,9 +1,17 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 import GameDataAPI as gd
+import BasicController as bc
+
 import numpy as np
 import pygame
 import cv2
 import math as m
 import sys
+import tensorflow as tf
+from tensorflow import keras
 
 pygame.init()
 
@@ -15,6 +23,9 @@ BLACK = (0,0,0)
 START_RES = (500,500)
 IMG_SIZE = (60,50)
 INVGAPSIZE = 14    # Inverse of player to opponent gap size (Low => Longer gap, High => Shorter gap)
+OUT_THRESH = 0.1
+
+''' Control variables '''
 gameInit = False
 playerMaxStock = 0
 oppMaxStock = 0
@@ -167,10 +178,23 @@ def getCharDataArray(character):
 
     return data
 
-
 '''Main driver code'''
 if __name__ == "__main__":
+    print("Waiting for SSF2 to connect")
     gd.startAPI()
+
+    ''' Set up NN model '''
+    NNmodel = keras.models.Sequential([
+        keras.layers.Dense(3094),
+        keras.layers.Dense(1024, activation="relu"),
+        keras.layers.Dense(128, activation="relu"),
+        keras.layers.Dense(11, activation="softmax")
+    ])
+
+    NNmodel.compile(optimizer='adam',
+        loss='sparse_categorical_crossentropy',
+        metrics=['accuracy']
+    )
 
     while gd.isActive():
 
@@ -205,11 +229,30 @@ if __name__ == "__main__":
                 cv2.waitKey(25)
 
             NNinput = np.concatenate((playerData, oppData, platimg, oppToPlayer))
+            NNinput = np.reshape(NNinput, (1,-1))   # Reshape input to 2D array
 
-            # print(NNinput.size)
+            output = np.reshape(NNmodel.predict(NNinput), (-1,))    # Reshape output into 1D array
+
+            # Press key if corresponding output is past threshold
+            keystate = {
+                "w":output[0] > OUT_THRESH,
+                "a":output[1] > OUT_THRESH,
+                "s":output[2] > OUT_THRESH,
+                "d":output[3] > OUT_THRESH,
+                "e":output[4] > OUT_THRESH,
+                "f":output[5] > OUT_THRESH,
+                "p":output[6] > OUT_THRESH,
+                "o":output[7] > OUT_THRESH,
+                "i":output[8] > OUT_THRESH,
+                "l":output[9] > OUT_THRESH,
+                "k":output[10] > OUT_THRESH
+            }
+            print(keystate)
+            bc.applyKeyState(keystate)
 
         else:
             gameInit = False
+            bc.resetKeyState()
 
 cv2.destroyAllWindows()
 gd.stopAPI()

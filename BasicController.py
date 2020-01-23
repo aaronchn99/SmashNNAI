@@ -110,6 +110,9 @@ def applyKeyState(keystates):
         keyfuncs[key](keystates[key])
     time.sleep(FRAMEINT)
 
+def resetKeyState():
+    applyKeyState({"w":False,"a":False,"s":False,"d":False,"e":False,"f":False,"p":False,"o":False,"i":False,"l":False,"k":False})
+
 if __name__ == "__main__":
     time.sleep(2)
     applyKeyState(keystate1)
