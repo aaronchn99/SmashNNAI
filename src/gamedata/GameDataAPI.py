@@ -1,4 +1,4 @@
-from gamedata.SSF2Connection import *
+from .SSF2Connection import *
 import numpy as np
 import os
 import pygame

@@ -1,4 +1,4 @@
-import gamedata.GameDataAPI as gd
+import .gamedata.GameDataAPI as gd
 import pygame
 
 pygame.init()

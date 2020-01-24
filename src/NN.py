@@ -2,8 +2,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-import gamedata.GameDataAPI as gd
-import controller.BasicController as bc
+import .gamedata.GameDataAPI as gd
+import .controller.BasicController as bc
 
 import math as m
 import sys

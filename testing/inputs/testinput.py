@@ -1,8 +1,8 @@
 import json
 import time
-import sys
+import sys, os
 
-sys.path.append("..")
+sys.path.append(os.path.join("..",".."))
 import src.controller.BasicController as bc
 
 sequences = dict()
