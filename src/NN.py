@@ -2,11 +2,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-import .gamedata.GameDataAPI as gd
-import .controller.BasicController as bc
+from gamedata import GameDataAPI as gd
+from controller import BasicController as bc
 
 import math as m
-import sys
+import sys, os
 import numpy as np
 import pygame
 import cv2
@@ -247,6 +247,7 @@ if __name__ == "__main__":
                 "l":output[9] > OUT_THRESH,
                 "k":output[10] > OUT_THRESH
             }
+            os.system("clear")
             print(keystate)
             bc.applyKeyState(keystate)
 
