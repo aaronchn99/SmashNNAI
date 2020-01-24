@@ -1,4 +1,4 @@
-from SSF2Connection import *
+from gamedata.SSF2Connection import *
 import numpy as np
 import os
 import pygame
@@ -182,6 +182,9 @@ rainbow = Terrain((236, 557), "rainbowplats.png")
 wario = Terrain((271, 453), "warioplats.png")
 
 
+# Checks if the API is active.
+# It's active when the connection handler thread is still running
+# (which stops when the connection is broken i.e. game has stopped)
 def isActive():
 	return sock_thread.is_alive()
 
@@ -260,17 +263,13 @@ def updateAPI():
 	player.update()
 	opponent.update()
 
-# Checks if the API is active.
-# It's active when the connection handler thread is still running
-# (which stops when the connection is broken i.e. game has stopped)
-
 def stopAPI():
 	sock_thread.join()
 
-if __name__ == "__main__":
-	startAPI()
-	while isActive():
-		if inGame():
-			updateAPI()
-			print(player.attack)
-	stopAPI()
+# if __name__ == "__main__":
+# 	startAPI()
+# 	while isActive():
+# 		if inGame():
+# 			updateAPI()
+# 			print(player.attack)
+# 	stopAPI()

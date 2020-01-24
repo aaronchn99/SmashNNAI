@@ -82,18 +82,18 @@ def socket_threading(SSF2):
 	SSF2.disconnect()
 
 
-if __name__ == "__main__":
-	SSF2 = SSF2Connection()
-	SSF2.connect()
-	sock_thread = threading.Thread(target=socket_threading, args=(SSF2,))
-	sock_thread.start()
-
-	# Demonstrates that up to date game data can be fetched on-demand
-	while sock_thread.is_alive():
-		if SSF2.gameStarted and SSF2.dataObj is not None:
-			pass
-			print(SSF2.dataObj["player"]["inputs"])
-			# print("%s\t%s" % (SSF2.dataObj["player"]["name"], SSF2.dataObj["player"]["currentAttack"]))
-			# time.sleep(1)
-
-	sock_thread.join()
+# if __name__ == "__main__":
+# 	SSF2 = SSF2Connection()
+# 	SSF2.connect()
+# 	sock_thread = threading.Thread(target=socket_threading, args=(SSF2,))
+# 	sock_thread.start()
+#
+# 	# Demonstrates that up to date game data can be fetched on-demand
+# 	while sock_thread.is_alive():
+# 		if SSF2.gameStarted and SSF2.dataObj is not None:
+# 			pass
+# 			print(SSF2.dataObj["player"]["inputs"])
+# 			# print("%s\t%s" % (SSF2.dataObj["player"]["name"], SSF2.dataObj["player"]["currentAttack"]))
+# 			# time.sleep(1)
+#
+# 	sock_thread.join()

@@ -113,16 +113,16 @@ def applyKeyState(keystates):
 def resetKeyState():
     applyKeyState({"w":False,"a":False,"s":False,"d":False,"e":False,"f":False,"p":False,"o":False,"i":False,"l":False,"k":False})
 
-if __name__ == "__main__":
-    time.sleep(2)
-    applyKeyState(keystate1)
-    for i in range(5):
-        for i in range(10):
-            applyKeyState(keystate2)
-        applyKeyState(keystate1)
-    applyKeyState(keystate3)
-    for i in range(5):
-        applyKeyState(keystate4)
-    for i in range(5):
-        applyKeyState(keystate5)
-    applyKeyState(keystate1)
+# if __name__ == "__main__":
+#     time.sleep(2)
+#     applyKeyState(keystate1)
+#     for i in range(5):
+#         for i in range(10):
+#             applyKeyState(keystate2)
+#         applyKeyState(keystate1)
+#     applyKeyState(keystate3)
+#     for i in range(5):
+#         applyKeyState(keystate4)
+#     for i in range(5):
+#         applyKeyState(keystate5)
+#     applyKeyState(keystate1)

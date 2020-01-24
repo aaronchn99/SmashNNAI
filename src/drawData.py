@@ -1,11 +1,9 @@
-import GameDataAPI as gd
+import gamedata.GameDataAPI as gd
 import pygame
-import os
 
 pygame.init()
 START_RES = (500,500)
 WHITE = (255,255,255)
-curDir = os.path.dirname(os.path.realpath(__file__))
 background = None
 hasInit = False
 

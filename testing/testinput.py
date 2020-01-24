@@ -1,7 +1,9 @@
-import BasicController as bc
 import json
 import time
+import sys
 
+sys.path.append("..")
+import src.controller.BasicController as bc
 
 sequences = dict()
 
@@ -9,7 +11,7 @@ def runSequence(seq):
     for frame in seq:
         bc.applyKeyState(frame)
 
-with open("testing/test_sequences.json", "r") as tf:
+with open("test_sequences.json", "r") as tf:
     sequences = json.load(tf)
 
 k = ""

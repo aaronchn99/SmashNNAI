@@ -2,14 +2,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-import GameDataAPI as gd
-import BasicController as bc
+import gamedata.GameDataAPI as gd
+import controller.BasicController as bc
 
+import math as m
+import sys
 import numpy as np
 import pygame
 import cv2
-import math as m
-import sys
 import tensorflow as tf
 from tensorflow import keras
 
@@ -254,6 +254,7 @@ if __name__ == "__main__":
             gameInit = False
             bc.resetKeyState()
 
-cv2.destroyAllWindows()
+if visualise:
+    cv2.destroyAllWindows()
 gd.stopAPI()
 pygame.quit()
