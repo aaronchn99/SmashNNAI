@@ -29,7 +29,7 @@ OUT_THRESH = 0.5
 gameInit = False
 pause = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
-NNmode = 1  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
+NNmode = 0  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
 
 ''' Game variables '''
 playerMaxStock = 0
@@ -37,7 +37,7 @@ oppMaxStock = 0
 
 ''' Hyperparameters '''
 input_width = 3094
-hidden_layers = [1024, 128]
+hidden_layers = [2048, 1024, 128]
 output_width = 11
 # Data type of numpy arrays and tensorflow layers and tensors
 tf_dtype = tf.float32
@@ -208,29 +208,47 @@ if __name__ == "__main__":
 
 
 
-    NNmodel = keras.models.Sequential()
     ''' Vanilla NN mode '''
     if NNmode == 0:
+        NNmodel = keras.models.Sequential()
         NNmodel.add(keras.layers.Dense(hidden_layers[0], input_shape=(input_width,), dtype=tf_dtype))
+        # Build the rest of the Feed-Forward NN
+        for l in range(len(hidden_layers)-1):
+            NNmodel.add(keras.layers.Dense(hidden_layers[l+1], input_shape=(hidden_layers[l],), activation="relu", use_bias=True, dtype=tf_dtype))
+        NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True, dtype=tf_dtype))
+        NNmodel.compile(optimizer='adam',
+            loss='categorical_crossentropy',
+            metrics=['accuracy']
+        )
         ''' RNN mode '''
     elif NNmode == 1:
+        NNmodel = keras.models.Sequential()
         RNNmodel = keras.layers.SimpleRNN(hidden_layers[0], return_state=True, dtype=tf_dtype)
         hidden_state = tf.zeros([1,hidden_layers[0]],dtype=tf_dtype)   # Initial short term memory state
+        # Build the rest of the Feed-Forward NN
+        for l in range(len(hidden_layers)-1):
+            NNmodel.add(keras.layers.Dense(hidden_layers[l+1], input_shape=(hidden_layers[l],), activation="relu", use_bias=True, dtype=tf_dtype))
+        NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True, dtype=tf_dtype))
+        NNmodel.compile(optimizer='adam',
+            loss='categorical_crossentropy',
+            metrics=['accuracy']
+        )
         ''' LSTM mode '''
     elif NNmode == 2:
+        NNmodel = keras.models.Sequential()
         LSTMmodel = keras.layers.LSTM(hidden_layers[0], return_state=True, dtype=tf_dtype)
         h_state = tf.zeros([1,hidden_layers[0]],dtype=tf_dtype) # Initial short term memory state
         c_state = tf.zeros([1,hidden_layers[0]],dtype=tf_dtype) # Initial long term memory state
+        # Build the rest of the Feed-Forward NN
+        for l in range(len(hidden_layers)-1):
+            NNmodel.add(keras.layers.Dense(hidden_layers[l+1], input_shape=(hidden_layers[l],), activation="relu", use_bias=True, dtype=tf_dtype))
+        NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True, dtype=tf_dtype))
+        NNmodel.compile(optimizer='adam',
+            loss='categorical_crossentropy',
+            metrics=['accuracy']
+        )
 
 
-    # Build the rest of the Feed-Forward NN
-    for l in range(len(hidden_layers)-1):
-        NNmodel.add(keras.layers.Dense(hidden_layers[l+1], input_shape=(hidden_layers[l],), activation="relu", use_bias=True, dtype=tf_dtype))
-    NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True, dtype=tf_dtype))
-    NNmodel.compile(optimizer='adam',
-        loss='categorical_crossentropy',
-        metrics=['accuracy']
-    )
 
     while gd.isActive():
 
