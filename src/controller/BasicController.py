@@ -8,12 +8,6 @@ LONG = 0.2
 FRAMEINT = 0.05
 keyspressed = set()
 
-keystate1 = {"w":False,"a":False,"s":False,"d":False,"e":False,"f":False,"p":False,"o":False,"i":False,"l":False,"k":False}
-keystate2 = {"w":False,"a":False,"s":False,"d":False,"e":True,"f":False,"p":False,"o":False,"i":False,"l":False,"k":False}
-keystate3 = {"w":False,"a":False,"s":True,"d":False,"e":False,"f":False,"p":True,"o":False,"i":False,"l":False,"k":False}
-keystate4 = {"w":False,"a":True,"s":False,"d":False,"e":False,"f":False,"p":False,"o":False,"i":False,"l":False,"k":False}
-keystate5 = {"w":False,"a":False,"s":False,"d":True,"e":False,"f":False,"p":False,"o":False,"i":False,"l":False,"k":False}
-
 
 def W(state):
     if state and "w" not in keyspressed:

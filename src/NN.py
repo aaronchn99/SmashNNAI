@@ -6,13 +6,12 @@ from gamedata import GameDataAPI as gd
 from controller import BasicController as bc
 
 import math as m
-import sys, os
+import sys, os, platform, subprocess
 import numpy as np
 import pygame
 import cv2
 import tensorflow as tf
 from tensorflow import keras
-
 pygame.init()
 
 ''' Colour triples '''
@@ -23,13 +22,22 @@ BLACK = (0,0,0)
 START_RES = (500,500)
 IMG_SIZE = (60,50)
 INVGAPSIZE = 14    # Inverse of player to opponent gap size (Low => Longer gap, High => Shorter gap)
-OUT_THRESH = 0.1
+OUT_THRESH = 0.5
 
 ''' Control variables '''
 gameInit = False
+visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
+NNmode = 1  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
+
+''' Game variables '''
 playerMaxStock = 0
 oppMaxStock = 0
-visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
+
+''' Hyperparameters '''
+input_width = 3094
+hidden_layers = [1024, 128]
+output_width = 11
+
 
 # Generate 2 images, the player to platforms and the player to opponent
 def getImg():
@@ -178,19 +186,31 @@ def getCharDataArray(character):
 
     return data
 
+
 '''Main driver code'''
 if __name__ == "__main__":
     print("Waiting for SSF2 to connect")
+    if platform.release() in ("Vista", "7", "8", "9", "10"):
+        subprocess.Popen(["..\\SSF2-win\\SSF2.exe"])
+    else:
+        subprocess.Popen(["../SSF2-linux/SSF2"])
     gd.startAPI()
 
-    ''' Set up NN model '''
-    NNmodel = keras.models.Sequential([
-        keras.layers.Dense(3094),
-        keras.layers.Dense(1024, activation="relu"),
-        keras.layers.Dense(128, activation="relu"),
-        keras.layers.Dense(11, activation="softmax")
-    ])
 
+    NNmodel = keras.models.Sequential()
+    ''' Vanilla NN mode '''
+    if NNmode == 0:
+        NNmodel.add(keras.layers.Dense(hidden_layers[0], input_shape=(input_width,)))
+
+        ''' RNN mode '''
+    elif NNmode == 1:
+        RNNmodel = keras.layers.SimpleRNN(hidden_layers[0], return_state=True)
+        hidden_state = tf.zeros([1,hidden_layers[0]])   # Short term memory state
+
+    # Build the rest of the Feed-Forward NN
+    for l in range(len(hidden_layers)-1):
+        NNmodel.add(keras.layers.Dense(hidden_layers[l+1], input_shape=(hidden_layers[l],), activation="relu", use_bias=True))
+    NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True))
     NNmodel.compile(optimizer='adam',
         loss='sparse_categorical_crossentropy',
         metrics=['accuracy']
@@ -216,23 +236,20 @@ if __name__ == "__main__":
             platimg, oppimg, oppToPlayer = getImg()
             platimg = np.reshape(platimg, -1)
             oppimg = np.reshape(oppimg, -1)
-            imgs = np.concatenate((platimg, oppimg), axis=None)
-
-            ''' Show inputs '''
-            if visualise:
-                dataview = np.concatenate((playerData, oppData, oppToPlayer))
-                for i in range(dataview.size % IMG_SIZE[0], IMG_SIZE[0]):
-                    dataview = np.append(dataview, 0)
-                view = np.concatenate((imgs, dataview))
-                view = np.reshape(view, (-1,IMG_SIZE[0]))
-                cv2.imshow("inputs", cv2.resize(view, dsize=(view.shape[1]*5, view.shape[0]*5), interpolation=cv2.INTER_AREA))
-                cv2.waitKey(25)
+            imgs = np.concatenate((platimg,), axis=None)
 
             NNinput = np.concatenate((playerData, oppData, platimg, oppToPlayer))
-            NNinput = np.reshape(NNinput, (1,-1))   # Reshape input to 2D array
 
-            output = np.reshape(NNmodel.predict(NNinput), (-1,))    # Reshape output into 1D array
+            ''' Feed forward inputs '''
+            if NNmode == 0:
+                NNinput = np.reshape(NNinput, (1,-1))   # Reshape input to 2D array
+                output = np.reshape(NNmodel.predict(NNinput), (-1,))    # Reshape output into 1D array
+            elif NNmode == 1:
+                NNinput = np.reshape(NNinput, (1, 1,-1))   # Reshape input to 3D array
+                RNNoutput, hidden_state = RNNmodel(NNinput, initial_state=[hidden_state])
+                output = np.reshape(NNmodel.predict(RNNoutput), (-1,))    # Reshape output into 1D array
 
+            ''' Apply game inputs '''
             # Press key if corresponding output is past threshold
             keystate = {
                 "w":output[0] > OUT_THRESH,
@@ -247,13 +264,48 @@ if __name__ == "__main__":
                 "l":output[9] > OUT_THRESH,
                 "k":output[10] > OUT_THRESH
             }
-            os.system("clear")
+            if platform.release() in ("Vista", "7", "8", "9", "10"):
+                os.system("cls")
+            else:
+                os.system("clear")
             print(keystate)
             bc.applyKeyState(keystate)
+
+            ''' Visualise '''
+            if visualise:
+                ''' Show inputs '''
+                dataview = np.concatenate((playerData, oppData, oppToPlayer))
+                for i in range(dataview.size % IMG_SIZE[0], IMG_SIZE[0]):
+                    dataview = np.append(dataview, 0)
+                view = np.concatenate((imgs, dataview))
+                view = np.reshape(view, (-1,IMG_SIZE[0]))
+                cv2.imshow("inputs", cv2.resize(view, dsize=(view.shape[1]*5, view.shape[0]*5), interpolation=cv2.INTER_AREA))
+
+                ''' Show layers '''
+                # RNN output
+                if NNmode == 1:
+                    rnnarray = RNNoutput.numpy()
+                    if rnnarray.size % 100 != 0:
+                        for i in range(rnnarray.size % 100, 100):
+                            rnnarray = np.append(rnnarray, 0)
+                    rnnarray = np.reshape(rnnarray, (-1, 100))
+                    cv2.imshow("RNN", cv2.resize(rnnarray, dsize=(rnnarray.shape[1]*5, rnnarray.shape[0]*5), interpolation=cv2.INTER_AREA))
+                # Each hidden layer in NNmodel
+                # for l in range(len(hidden_layers)):
+                #     print(l)
+                #     layerarray = NNmodel.get_layer(index=l).output.eval()
+                #     if layerarray.size % 100 != 0:
+                #         for i in range(layerarray.size % 100, 100):
+                #             layerarray = np.append(layerarray, 0)
+                #     layerarray = np.reshape(layerarray, (-1, 100))
+                #     cv2.imshow("Layer "+str(l), cv2.resize(layerarray, dsize=(layerarray.shape[1]*5, layerarray.shape[0]*5), interpolation=cv2.INTER_AREA))
+
+                cv2.waitKey(25)
 
         else:
             gameInit = False
             bc.resetKeyState()
+            cv2.destroyAllWindows()
 
 if visualise:
     cv2.destroyAllWindows()
