@@ -4,6 +4,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from gamedata import GameDataAPI as gd
 from controller import BasicController as bc
+from controller import keymonitor as km
 
 import math as m
 import sys, os, platform, subprocess
@@ -22,10 +23,11 @@ BLACK = (0,0,0)
 START_RES = (500,500)
 IMG_SIZE = (60,50)
 INVGAPSIZE = 14    # Inverse of player to opponent gap size (Low => Longer gap, High => Shorter gap)
-OUT_THRESH = 10
+OUT_THRESH = 0.5
 
 ''' Control variables '''
 gameInit = False
+pause = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
 NNmode = 1  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
 
@@ -201,6 +203,9 @@ if __name__ == "__main__":
         os.chdir("../SSF2-linux/")
         subprocess.Popen("./SSF2", stderr=subprocess.DEVNULL)
     gd.startAPI()
+    # Keyboard listener
+    keylistener = km.start_listener()
+
 
 
     NNmodel = keras.models.Sequential()
@@ -319,6 +324,16 @@ if __name__ == "__main__":
 
                 cv2.waitKey(25)
 
+            # Pause and reset controller if ESC key pressed once
+            if km.is_pressed_once(km.ESC):
+                pause = True
+                bc.resetKeyState()
+
+            # Pause loop
+            while pause:
+                if km.is_pressed_once(km.ESC) or not gd.isActive() or not gd.inGame():
+                    pause = False
+
         else:
             gameInit = False
             bc.resetKeyState()
@@ -328,3 +343,4 @@ if visualise:
     cv2.destroyAllWindows()
 gd.stopAPI()
 pygame.quit()
+keylistener.stop()
