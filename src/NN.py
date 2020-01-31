@@ -22,7 +22,7 @@ BLACK = (0,0,0)
 START_RES = (500,500)
 IMG_SIZE = (60,50)
 INVGAPSIZE = 14    # Inverse of player to opponent gap size (Low => Longer gap, High => Shorter gap)
-OUT_THRESH = 0.5
+OUT_THRESH = 10
 
 ''' Control variables '''
 gameInit = False
@@ -37,6 +37,9 @@ oppMaxStock = 0
 input_width = 3094
 hidden_layers = [1024, 128]
 output_width = 11
+# Data type of numpy arrays and tensorflow layers and tensors
+tf_dtype = tf.float32
+np_dtype = np.float32
 
 
 # Generate 2 images, the player to platforms and the player to opponent
@@ -190,29 +193,37 @@ def getCharDataArray(character):
 '''Main driver code'''
 if __name__ == "__main__":
     print("Waiting for SSF2 to connect")
+    # Windows
     if platform.release() in ("Vista", "7", "8", "9", "10"):
         subprocess.Popen(["..\\SSF2-win\\SSF2.exe"])
     else:
-        subprocess.Popen(["../SSF2-linux/SSF2"])
+        # Linux
+        os.chdir("../SSF2-linux/")
+        subprocess.Popen("./SSF2", stderr=subprocess.DEVNULL)
     gd.startAPI()
 
 
     NNmodel = keras.models.Sequential()
     ''' Vanilla NN mode '''
     if NNmode == 0:
-        NNmodel.add(keras.layers.Dense(hidden_layers[0], input_shape=(input_width,)))
-
+        NNmodel.add(keras.layers.Dense(hidden_layers[0], input_shape=(input_width,), dtype=tf_dtype))
         ''' RNN mode '''
     elif NNmode == 1:
-        RNNmodel = keras.layers.SimpleRNN(hidden_layers[0], return_state=True)
-        hidden_state = tf.zeros([1,hidden_layers[0]])   # Short term memory state
+        RNNmodel = keras.layers.SimpleRNN(hidden_layers[0], return_state=True, dtype=tf_dtype)
+        hidden_state = tf.zeros([1,hidden_layers[0]],dtype=tf_dtype)   # Initial short term memory state
+        ''' LSTM mode '''
+    elif NNmode == 2:
+        LSTMmodel = keras.layers.LSTM(hidden_layers[0], return_state=True, dtype=tf_dtype)
+        h_state = tf.zeros([1,hidden_layers[0]],dtype=tf_dtype) # Initial short term memory state
+        c_state = tf.zeros([1,hidden_layers[0]],dtype=tf_dtype) # Initial long term memory state
+
 
     # Build the rest of the Feed-Forward NN
     for l in range(len(hidden_layers)-1):
-        NNmodel.add(keras.layers.Dense(hidden_layers[l+1], input_shape=(hidden_layers[l],), activation="relu", use_bias=True))
-    NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True))
+        NNmodel.add(keras.layers.Dense(hidden_layers[l+1], input_shape=(hidden_layers[l],), activation="relu", use_bias=True, dtype=tf_dtype))
+    NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True, dtype=tf_dtype))
     NNmodel.compile(optimizer='adam',
-        loss='sparse_categorical_crossentropy',
+        loss='categorical_crossentropy',
         metrics=['accuracy']
     )
 
@@ -228,26 +239,32 @@ if __name__ == "__main__":
 
             ''' Player data '''
             playerData = getCharDataArray(gd.player)
-
             ''' Opponent data '''
             oppData = getCharDataArray(gd.opponent)
-
             ''' Image data '''
             platimg, oppimg, oppToPlayer = getImg()
             platimg = np.reshape(platimg, -1)
             oppimg = np.reshape(oppimg, -1)
             imgs = np.concatenate((platimg,), axis=None)
-
+            ''' Joining data together '''
             NNinput = np.concatenate((playerData, oppData, platimg, oppToPlayer))
+            NNinput = NNinput.astype(np_dtype)  # Convert to standard data type
 
             ''' Feed forward inputs '''
+            # Vanilla
             if NNmode == 0:
                 NNinput = np.reshape(NNinput, (1,-1))   # Reshape input to 2D array
                 output = np.reshape(NNmodel.predict(NNinput), (-1,))    # Reshape output into 1D array
+            # RNN
             elif NNmode == 1:
-                NNinput = np.reshape(NNinput, (1, 1,-1))   # Reshape input to 3D array
-                RNNoutput, hidden_state = RNNmodel(NNinput, initial_state=[hidden_state])
-                output = np.reshape(NNmodel.predict(RNNoutput), (-1,))    # Reshape output into 1D array
+                NNinput = np.reshape(NNinput, (1, 1,-1))   # Reshape input to (1 batch, 1 timestep, features)
+                RNNoutput, hidden_state = RNNmodel(NNinput, initial_state=[hidden_state])   # Feed current inputs , as well as previous hidden state
+                output = np.reshape(NNmodel.predict(RNNoutput.numpy()), (-1,))    # Reshape output into 1D array
+            # LSTM
+            elif NNmode == 2:
+                NNinput = np.reshape(NNinput, (1, 1,-1))   # Reshape input to (1 batch, 1 timestep, features)
+                LSTMoutput, h_state, c_state = LSTMmodel(NNinput, initial_state=[h_state, c_state])
+                output = np.reshape(NNmodel.predict(LSTMoutput.numpy()), (-1,))    # Reshape output into 1D array
 
             ''' Apply game inputs '''
             # Press key if corresponding output is past threshold
@@ -268,7 +285,7 @@ if __name__ == "__main__":
                 os.system("cls")
             else:
                 os.system("clear")
-            print(keystate)
+            print(output)
             bc.applyKeyState(keystate)
 
             ''' Visualise '''
