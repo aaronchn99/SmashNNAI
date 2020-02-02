@@ -191,6 +191,54 @@ def getCharDataArray(character):
 
     return data
 
+# Generate the input array
+def genInput():
+    global gameInit, playerMaxStock, oppMaxStock
+    gd.updateAPI()
+    # Initialise stuff when starting game
+    if not gameInit:
+        playerMaxStock = gd.player.lives
+        oppMaxStock = gd.opponent.lives
+        gameInit = True
+
+    ''' Player data '''
+    playerData = getCharDataArray(gd.player)
+    ''' Opponent data '''
+    oppData = getCharDataArray(gd.opponent)
+    ''' Image data '''
+    platimg, oppimg, oppToPlayer = getImg()
+    platimg = np.reshape(platimg, -1)
+    oppimg = np.reshape(oppimg, -1)
+    imgs = np.concatenate((platimg,), axis=None)
+    ''' Joining data together '''
+    NNinput = np.concatenate((playerData, oppData, platimg, oppToPlayer))
+    NNinput = NNinput.astype(np_dtype)  # Convert to standard data type
+
+    return NNinput
+
+# Called when leaving the game
+def resetData():
+    global gameInit, playerMaxStock, oppMaxStock
+    gameInit = False
+    playerMaxStock = 0
+    oppMaxStock = 0
+
+# Visualise controller
+def showController(pressedButtons):
+    control_view = np.zeros((4, 10))
+    control_view[0][1] = 0.5+0.5*pressedButtons["shield"]
+    control_view[0][3] = 0.5+0.5*pressedButtons["grab"]
+    control_view[0][5] = 0.5+0.5*pressedButtons["taunt"]
+    control_view[1][2] = 0.5+0.5*pressedButtons["up"]
+    control_view[1][7] = 0.5+0.5*pressedButtons["jump"]
+    control_view[2][1] = 0.5+0.5*pressedButtons["left"]
+    control_view[2][3] = 0.5+0.5*pressedButtons["right"]
+    control_view[2][6] = 0.5+0.5*pressedButtons["dash"]
+    control_view[2][8] = 0.5+0.5*pressedButtons["a"]
+    control_view[3][2] = 0.5+0.5*pressedButtons["down"]
+    control_view[3][7] = 0.5+0.5*pressedButtons["b"]
+    cv2.imshow("controls", cv2.resize(control_view, dsize=(control_view.shape[1]*20, control_view.shape[0]*20), interpolation=cv2.INTER_AREA))
+
 
 '''Main driver code'''
 if __name__ == "__main__":
@@ -287,25 +335,8 @@ if __name__ == "__main__":
     while gd.isActive():
 
         if gd.inGame():
-            gd.updateAPI()
-            # Initialise stuff when starting game
-            if not gameInit:
-                playerMaxStock = gd.player.lives
-                oppMaxStock = gd.opponent.lives
-                gameInit = True
-
-            ''' Player data '''
-            playerData = getCharDataArray(gd.player)
-            ''' Opponent data '''
-            oppData = getCharDataArray(gd.opponent)
-            ''' Image data '''
-            platimg, oppimg, oppToPlayer = getImg()
-            platimg = np.reshape(platimg, -1)
-            oppimg = np.reshape(oppimg, -1)
-            imgs = np.concatenate((platimg,), axis=None)
-            ''' Joining data together '''
-            NNinput = np.concatenate((playerData, oppData, platimg, oppToPlayer))
-            NNinput = NNinput.astype(np_dtype)  # Convert to standard data type
+            NNinput = genInput()    # Get data array to feed into NN model
+            dataview = NNinput.view()
 
             ''' Feed forward inputs '''
             # Vanilla
@@ -341,11 +372,10 @@ if __name__ == "__main__":
             ''' Visualise '''
             if visualise:
                 ''' Show inputs '''
-                dataview = np.concatenate((playerData, oppData, oppToPlayer))
+                dataview = np.concatenate((dataview[90:3090],dataview[:90],dataview[3090:3094]))
                 for i in range(dataview.size % IMG_SIZE[0], IMG_SIZE[0]):
                     dataview = np.append(dataview, 0)
-                view = np.concatenate((imgs, dataview))
-                view = np.reshape(view, (-1,IMG_SIZE[0]))
+                view = np.reshape(dataview, (-1,IMG_SIZE[0]))
                 cv2.imshow("inputs", cv2.resize(view, dsize=(view.shape[1]*5, view.shape[0]*5), interpolation=cv2.INTER_AREA))
 
                 ''' Show layers '''
@@ -367,6 +397,21 @@ if __name__ == "__main__":
                 #     layerarray = np.reshape(layerarray, (-1, 100))
                 #     cv2.imshow("Layer "+str(l), cv2.resize(layerarray, dsize=(layerarray.shape[1]*5, layerarray.shape[0]*5), interpolation=cv2.INTER_AREA))
 
+                ''' Show controller '''
+                showController({
+                    "up":output[0] > OUT_THRESH,
+                    "left":output[1] > OUT_THRESH,
+                    "down":output[2] > OUT_THRESH,
+                    "right":output[3] > OUT_THRESH,
+                    "jump":output[4] > OUT_THRESH,
+                    "dash":output[5] > OUT_THRESH,
+                    "a":output[6] > OUT_THRESH,
+                    "b":output[7] > OUT_THRESH,
+                    "grab":output[8] > OUT_THRESH,
+                    "shield":output[9] > OUT_THRESH,
+                    "taunt":output[10] > OUT_THRESH
+                })
+
                 cv2.waitKey(25)
 
             # Pause and reset controller if ESC key pressed once
@@ -380,12 +425,13 @@ if __name__ == "__main__":
                     pause = False
 
         else:
-            gameInit = False
+            resetData()
             bc.resetKeyState()
             cv2.destroyAllWindows()
 
-if visualise:
-    cv2.destroyAllWindows()
-gd.stopAPI()
+    if visualise:
+        cv2.destroyAllWindows()
+    gd.stopAPI()
+    keylistener.stop()
+
 pygame.quit()
-keylistener.stop()
