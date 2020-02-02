@@ -29,7 +29,7 @@ OUT_THRESH = 0.5
 gameInit = False
 pause = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
-NNmode = 0  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
+NNmode = 2  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
 
 ''' Game variables '''
 playerMaxStock = 0
@@ -209,44 +209,78 @@ if __name__ == "__main__":
 
 
     ''' Vanilla NN mode '''
+    NNmodel = keras.models.Sequential()
     if NNmode == 0:
-        NNmodel = keras.models.Sequential()
-        NNmodel.add(keras.layers.Dense(hidden_layers[0], input_shape=(input_width,), dtype=tf_dtype))
+        NNmodel.add(keras.layers.Dense(
+            hidden_layers[0],
+            input_shape=(input_width,),
+            activation="relu",
+            use_bias=True,
+            dtype=tf_dtype
+        ))
         # Build the rest of the Feed-Forward NN
         for l in range(len(hidden_layers)-1):
-            NNmodel.add(keras.layers.Dense(hidden_layers[l+1], input_shape=(hidden_layers[l],), activation="relu", use_bias=True, dtype=tf_dtype))
+            NNmodel.add(keras.layers.Dense(
+                hidden_layers[l+1],
+                input_shape=(hidden_layers[l],),
+                activation="relu",
+                use_bias=True,
+                dtype=tf_dtype
+            ))
         NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True, dtype=tf_dtype))
-        NNmodel.compile(optimizer='adam',
-            loss='categorical_crossentropy',
-            metrics=['accuracy']
-        )
         ''' RNN mode '''
     elif NNmode == 1:
-        NNmodel = keras.models.Sequential()
-        RNNmodel = keras.layers.SimpleRNN(hidden_layers[0], return_state=True, dtype=tf_dtype)
-        hidden_state = tf.zeros([1,hidden_layers[0]],dtype=tf_dtype)   # Initial short term memory state
+        NNmodel.add(keras.layers.SimpleRNN(
+            hidden_layers[0],
+            name="rnn_input",
+            batch_input_shape=(1,1,input_width),
+            stateful=True,
+            return_sequences=True,
+            activation="relu",
+            use_bias=True,
+            dtype=tf_dtype
+        ))
         # Build the rest of the Feed-Forward NN
         for l in range(len(hidden_layers)-1):
-            NNmodel.add(keras.layers.Dense(hidden_layers[l+1], input_shape=(hidden_layers[l],), activation="relu", use_bias=True, dtype=tf_dtype))
-        NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True, dtype=tf_dtype))
-        NNmodel.compile(optimizer='adam',
-            loss='categorical_crossentropy',
-            metrics=['accuracy']
-        )
+            NNmodel.add(keras.layers.SimpleRNN(
+                hidden_layers[l+1],
+                name="rnn"+str(l),
+                stateful=True,
+                return_sequences=True,
+                activation="relu",
+                use_bias=True,
+                dtype=tf_dtype
+            ))
+        NNmodel.add(keras.layers.Dense(output_width, name="rnn_output", activation="sigmoid", use_bias=True, dtype=tf_dtype))
         ''' LSTM mode '''
     elif NNmode == 2:
-        NNmodel = keras.models.Sequential()
-        LSTMmodel = keras.layers.LSTM(hidden_layers[0], return_state=True, dtype=tf_dtype)
-        h_state = tf.zeros([1,hidden_layers[0]],dtype=tf_dtype) # Initial short term memory state
-        c_state = tf.zeros([1,hidden_layers[0]],dtype=tf_dtype) # Initial long term memory state
+        NNmodel.add(keras.layers.LSTM(
+            hidden_layers[0],
+            name="lstm_input",
+            batch_input_shape=(1,1,input_width),
+            stateful=True,
+            return_sequences=True,
+            activation="relu",
+            use_bias=True,
+            dtype=tf_dtype
+        ))
         # Build the rest of the Feed-Forward NN
         for l in range(len(hidden_layers)-1):
-            NNmodel.add(keras.layers.Dense(hidden_layers[l+1], input_shape=(hidden_layers[l],), activation="relu", use_bias=True, dtype=tf_dtype))
-        NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True, dtype=tf_dtype))
-        NNmodel.compile(optimizer='adam',
-            loss='categorical_crossentropy',
-            metrics=['accuracy']
-        )
+            NNmodel.add(keras.layers.LSTM(
+                hidden_layers[l+1],
+                name="lstm"+str(l),
+                stateful=True,
+                return_sequences=True,
+                activation="relu",
+                use_bias=True,
+                dtype=tf_dtype
+            ))
+        NNmodel.add(keras.layers.Dense(output_width, name="lstm_output", activation="sigmoid", use_bias=True, dtype=tf_dtype))
+    # Build Model with training settings
+    NNmodel.compile(optimizer='adam',
+        loss='categorical_crossentropy',
+        metrics=['accuracy']
+    )
 
 
 
@@ -276,18 +310,11 @@ if __name__ == "__main__":
             ''' Feed forward inputs '''
             # Vanilla
             if NNmode == 0:
-                NNinput = np.reshape(NNinput, (1,-1))   # Reshape input to 2D array
-                output = np.reshape(NNmodel.predict(NNinput), (-1,))    # Reshape output into 1D array
-            # RNN
-            elif NNmode == 1:
-                NNinput = np.reshape(NNinput, (1, 1,-1))   # Reshape input to (1 batch, 1 timestep, features)
-                RNNoutput, hidden_state = RNNmodel(NNinput, initial_state=[hidden_state])   # Feed current inputs , as well as previous hidden state
-                output = np.reshape(NNmodel.predict(RNNoutput.numpy()), (-1,))    # Reshape output into 1D array
-            # LSTM
-            elif NNmode == 2:
-                NNinput = np.reshape(NNinput, (1, 1,-1))   # Reshape input to (1 batch, 1 timestep, features)
-                LSTMoutput, h_state, c_state = LSTMmodel(NNinput, initial_state=[h_state, c_state])
-                output = np.reshape(NNmodel.predict(LSTMoutput.numpy()), (-1,))    # Reshape output into 1D array
+                NNinput = np.reshape(NNinput, (1,-1))   # Reshape input to 2D array (1 sample, features)
+            # RNN and LSTM
+            elif NNmode == 1 or NNmode == 2:
+                NNinput = np.reshape(NNinput, (1, 1,-1))   # Reshape input to (1 sample, 1 timestep, features)
+            output = np.reshape(NNmodel.predict(NNinput), (-1,))    # Feed forward and reshape output into 1D array
 
             ''' Apply game inputs '''
             # Press key if corresponding output is past threshold
@@ -323,13 +350,13 @@ if __name__ == "__main__":
 
                 ''' Show layers '''
                 # RNN output
-                if NNmode == 1:
-                    rnnarray = RNNoutput.numpy()
-                    if rnnarray.size % 100 != 0:
-                        for i in range(rnnarray.size % 100, 100):
-                            rnnarray = np.append(rnnarray, 0)
-                    rnnarray = np.reshape(rnnarray, (-1, 100))
-                    cv2.imshow("RNN", cv2.resize(rnnarray, dsize=(rnnarray.shape[1]*5, rnnarray.shape[0]*5), interpolation=cv2.INTER_AREA))
+                # if NNmode == 1:
+                #     rnnarray = RNNoutput.numpy()
+                #     if rnnarray.size % 100 != 0:
+                #         for i in range(rnnarray.size % 100, 100):
+                #             rnnarray = np.append(rnnarray, 0)
+                #     rnnarray = np.reshape(rnnarray, (-1, 100))
+                #     cv2.imshow("RNN", cv2.resize(rnnarray, dsize=(rnnarray.shape[1]*5, rnnarray.shape[0]*5), interpolation=cv2.INTER_AREA))
                 # Each hidden layer in NNmodel
                 # for l in range(len(hidden_layers)):
                 #     print(l)
