@@ -24,6 +24,7 @@ START_RES = (500,500)
 IMG_SIZE = (60,50)
 INVGAPSIZE = 14    # Inverse of player to opponent gap size (Low => Longer gap, High => Shorter gap)
 OUT_THRESH = 0.5
+FRAMEINT = 0.05     # Delay between each tick
 
 ''' Control variables '''
 pause = False
@@ -411,6 +412,11 @@ if __name__ == "__main__":
                 if km.is_pressed_once(km.ESC) or not gd.isActive() or not gd.inGame():
                     pause = False
 
+            # Wait for remainder of FRAMEINT (Unless elapsed time longer than FRAMEINT)
+            delay = time.time()-time1
+            if FRAMEINT - delay > 0:
+                time.sleep(FRAMEINT - delay)
+            
             print(time.time()-time1)
 
         else:

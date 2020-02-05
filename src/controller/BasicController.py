@@ -102,7 +102,7 @@ keyfuncs = {"w":W,"a":A,"s":S,"d":D,"e":E,"f":F,"p":P,"o":O,"i":I,"l":L,"k":K}
 def applyKeyState(keystates):
     for key in keystates.keys():
         keyfuncs[key](keystates[key])
-    time.sleep(FRAMEINT)
+    # time.sleep(FRAMEINT)
 
 def resetKeyState():
     applyKeyState({"w":False,"a":False,"s":False,"d":False,"e":False,"f":False,"p":False,"o":False,"i":False,"l":False,"k":False})

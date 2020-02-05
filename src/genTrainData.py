@@ -8,6 +8,9 @@ import time
 
 IMG_SIZE = (60,50)
 
+debug = False
+FRAMEINT = 0.05
+
 # Visualise controller
 def showController(pressedButtons):
     control_view = np.zeros((4, 10))
@@ -38,6 +41,7 @@ if __name__ == "__main__":
 
     while gd.isActive():
         if gd.inGame():
+            time1 = time.time()
             gd.updateInGame()
             NNinput = genI.genInput()
 
@@ -51,13 +55,18 @@ if __name__ == "__main__":
             showController(gd.player.pressedButtons)
             cv2.waitKey(25)
 
-            time1 = time.time()
-            if platform.release() in ("Vista", "7", "8", "9", "10"):
-                os.system("cls")
-            else:
-                os.system("clear")
+            if debug:
+                if platform.release() in ("Vista", "7", "8", "9", "10"):
+                    os.system("cls")
+                else:
+                    os.system("clear")
+
+            # Wait for remainder of FRAMEINT (Unless elapsed time longer than FRAMEINT)
+            delay = time.time()-time1
+            if FRAMEINT - delay > 0:
+                time.sleep(FRAMEINT - delay)
+
             print(time.time()-time1)
-            time.sleep(0.05)
         else:
             gd.updateOffGame()
             cv2.destroyAllWindows()
