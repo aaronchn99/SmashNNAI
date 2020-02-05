@@ -7,6 +7,7 @@ SSF2 = SSF2Connection() # Connection object to SSF2
 sock_thread = threading.Thread(target=socket_threading, args=(SSF2,))   # Thread that handles the Connection in the background
 currentData = dict()
 curDir = os.path.dirname(os.path.realpath(__file__))
+gameInit = False	# Flag controlling initialization of API when in game
 
 suppressJumpMoves = {
 	"mario":("b_up", "b_up_air"),
@@ -16,22 +17,24 @@ suppressJumpMoves = {
 	"kirby":("b_up", "b_up_air")
 }
 
-''' API Data object and functions '''
+
+''' API Data objects and functions '''
 class Character(object):
 
+	# Must be constructed when first starting the game
 	def __init__(self, type):
 		self.charType = type	# Set whether player or opponent character
 		self.suppressJump = False
+		self.maxLives = self.lives
 
 	def update(self):
-		charData = currentData[self.charType]	# Update current character data
+		charData = currentData[self.charType]
 		# Suppress jump if a suppressing move jump has been made
 		if charData["name"] in suppressJumpMoves.keys():
 			if charData["currentAttack"] is not None and charData["currentAttack"] in suppressJumpMoves[charData["name"]]:
-		# if charData["currentAttack"] is not None and charData["currentAttack"] == "b_up":
 				self.suppressJump = True
-		# Unsuppress jump when landed
-		if self.suppressJump and (currentData[self.charType]["land"] or self.ko):
+		# Unsuppress jump when landed or knocked out
+		if self.suppressJump and (charData["land"] or self.ko):
 			self.suppressJump = False
 
 	@property
@@ -124,7 +127,6 @@ class Character(object):
 	def facing_right(self):
 		return currentData[self.charType]["faceright"]
 
-
 class Player(Character):
 	def __init__(self):
 		super().__init__("player")
@@ -147,11 +149,9 @@ class Player(Character):
 		}
 		return buttons
 
-
 class Opponent(Character):
 	def __init__(self):
 		super().__init__("opponent")
-
 
 class Terrain(object):
 	def __init__(self, pos, filename):
@@ -162,11 +162,6 @@ class Terrain(object):
 	@property
 	def img(self):
 		return self.pygame_img
-
-
-# Characters
-player = Player()
-opponent = Opponent()
 
 # Terrains
 threeDS = Terrain((235, 362), "3dsplats.png")
@@ -180,16 +175,6 @@ mush2_3 = Terrain((741, 328), "mush2plat3.png")
 pacmaze = Terrain((404, 353), "pacmazeplats.png")
 rainbow = Terrain((236, 557), "rainbowplats.png")
 wario = Terrain((271, 453), "warioplats.png")
-
-
-# Checks if the API is active.
-# It's active when the connection handler thread is still running
-# (which stops when the connection is broken i.e. game has stopped)
-def isActive():
-	return sock_thread.is_alive()
-
-def inGame():
-	return SSF2.gameStarted
 
 def stage():
 	return currentData["stage"]
@@ -225,13 +210,19 @@ def terrain():
 	else:
 		return []
 
+# Checks if the API is active.
+# It's active when the connection handler thread is still running
+# (which stops when the connection is broken i.e. game has stopped)
+def isActive():
+	return sock_thread.is_alive()
 
-''' API control functions '''
-# Starts up all objects required by API (Connection and its handler)
-def startAPI():
-	SSF2.connect()
-	sock_thread.start()
+# Checks if SSF2 game has started
+def inGame():
+	return SSF2.gameStarted
 
+
+''' API private control functions '''
+# Shifts objects so that the top-left corner of the camera bounds is the origin
 def applyOffset(offset):
 	# Apply to deathbounds
 	currentData["deathbounds"]["x0"] += offset[0]
@@ -253,16 +244,38 @@ def applyOffset(offset):
 		p["x"] += offset[0]
 		p["y"] += offset[1]
 
-def updateAPI():
-	global currentData, posOffset
+''' API public control functions '''
+# Starts up all objects required by API (Connection and its handler)
+def startAPI():
+	SSF2.connect()
+	sock_thread.start()
+
+# Called while SSF2 is in game
+def updateInGame():
+	global currentData, posOffset, player, opponent, gameInit
 	currentData = SSF2.copyDataObj()
+	# Remove 5th platform object from Warioware
 	if stage() == "warioware":
 		currentData["platforms"] = currentData["platforms"][:4]
+	# Translates coordinates
 	offset = (-cambounds()["x0"], -cambounds()["y0"])
 	applyOffset(offset)
+	if not gameInit:
+		# Characters
+		player = Player()
+		opponent = Opponent()
+		gameInit = True
 	player.update()
 	opponent.update()
 
+# Called while SSF2 not in game
+def updateOffGame():
+	global player, opponent, gameInit
+	gameInit = False
+	player = None
+	opponent = None
+
+# Cleans up API
 def stopAPI():
 	sock_thread.join()
 

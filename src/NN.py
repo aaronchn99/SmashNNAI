@@ -26,14 +26,9 @@ INVGAPSIZE = 14    # Inverse of player to opponent gap size (Low => Longer gap, 
 OUT_THRESH = 0.5
 
 ''' Control variables '''
-gameInit = False
 pause = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
 NNmode = 2  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
-
-''' Game variables '''
-playerMaxStock = 0
-oppMaxStock = 0
 
 ''' Hyperparameters '''
 input_width = 3094
@@ -96,7 +91,7 @@ def getCharDataArray(character):
     # Continuous inputs
     data = np.array( \
         # Stock
-        [character.lives/playerMaxStock,   \
+        [character.lives/character.maxLives,   \
         # Damage taken
         m.tanh(character.damage/100),    \
         # Shield power
@@ -193,13 +188,7 @@ def getCharDataArray(character):
 
 # Generate the input array
 def genInput():
-    global gameInit, playerMaxStock, oppMaxStock
-    gd.updateAPI()
-    # Initialise stuff when starting game
-    if not gameInit:
-        playerMaxStock = gd.player.lives
-        oppMaxStock = gd.opponent.lives
-        gameInit = True
+    gd.updateInGame()
 
     ''' Player data '''
     playerData = getCharDataArray(gd.player)
@@ -215,13 +204,6 @@ def genInput():
     NNinput = NNinput.astype(np_dtype)  # Convert to standard data type
 
     return NNinput
-
-# Called when leaving the game
-def resetData():
-    global gameInit, playerMaxStock, oppMaxStock
-    gameInit = False
-    playerMaxStock = 0
-    oppMaxStock = 0
 
 # Visualise controller
 def showController(pressedButtons):
@@ -425,7 +407,7 @@ if __name__ == "__main__":
                     pause = False
 
         else:
-            resetData()
+            gd.updateOffGame()
             bc.resetKeyState()
             cv2.destroyAllWindows()
 
