@@ -1,11 +1,28 @@
 from gamedata import GameDataAPI as gd
-import NN
+import genInputArray as genI
 
 import platform, os, subprocess
 import cv2
 import numpy as np
+import time
 
 IMG_SIZE = (60,50)
+
+# Visualise controller
+def showController(pressedButtons):
+    control_view = np.zeros((4, 10))
+    control_view[0][1] = 0.5+0.5*pressedButtons["shield"]
+    control_view[0][3] = 0.5+0.5*pressedButtons["grab"]
+    control_view[0][5] = 0.5+0.5*pressedButtons["taunt"]
+    control_view[1][2] = 0.5+0.5*pressedButtons["up"]
+    control_view[1][7] = 0.5+0.5*pressedButtons["jump"]
+    control_view[2][1] = 0.5+0.5*pressedButtons["left"]
+    control_view[2][3] = 0.5+0.5*pressedButtons["right"]
+    control_view[2][6] = 0.5+0.5*pressedButtons["dash"]
+    control_view[2][8] = 0.5+0.5*pressedButtons["a"]
+    control_view[3][2] = 0.5+0.5*pressedButtons["down"]
+    control_view[3][7] = 0.5+0.5*pressedButtons["b"]
+    cv2.imshow("controls", cv2.resize(control_view, dsize=(control_view.shape[1]*20, control_view.shape[0]*20), interpolation=cv2.INTER_AREA))
 
 
 if __name__ == "__main__":
@@ -21,7 +38,8 @@ if __name__ == "__main__":
 
     while gd.isActive():
         if gd.inGame():
-            NNinput = NN.genInput()
+            gd.updateInGame()
+            NNinput = genI.genInput()
 
             ''' Visualise '''
             dataview = NNinput.view()
@@ -30,14 +48,18 @@ if __name__ == "__main__":
                 dataview = np.append(dataview, 0)
             view = np.reshape(dataview, (-1,IMG_SIZE[0]))
             cv2.imshow("inputs", cv2.resize(view, dsize=(view.shape[1]*5, view.shape[0]*5), interpolation=cv2.INTER_AREA))
-            NN.showController(gd.player.pressedButtons)
+            showController(gd.player.pressedButtons)
             cv2.waitKey(25)
 
+            time1 = time.time()
             if platform.release() in ("Vista", "7", "8", "9", "10"):
                 os.system("cls")
             else:
                 os.system("clear")
+            print(time.time()-time1)
+            time.sleep(0.05)
         else:
-            NN.resetData()
+            gd.updateOffGame()
             cv2.destroyAllWindows()
     cv2.destroyAllWindows()
+    genI.cleanup()

@@ -7,7 +7,7 @@ from controller import BasicController as bc
 from controller import keymonitor as km
 
 import math as m
-import sys, os, platform, subprocess
+import sys, os, platform, subprocess, time
 import numpy as np
 import pygame
 import cv2
@@ -29,6 +29,7 @@ OUT_THRESH = 0.5
 pause = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
 NNmode = 2  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
+debug = False   # Debug mode
 
 ''' Hyperparameters '''
 input_width = 3094
@@ -317,6 +318,7 @@ if __name__ == "__main__":
     while gd.isActive():
 
         if gd.inGame():
+            time1 = time.time()
             NNinput = genInput()    # Get data array to feed into NN model
             dataview = NNinput.view()
 
@@ -344,12 +346,15 @@ if __name__ == "__main__":
                 "l":output[9] > OUT_THRESH,
                 "k":output[10] > OUT_THRESH
             }
-            if platform.release() in ("Vista", "7", "8", "9", "10"):
-                os.system("cls")
-            else:
-                os.system("clear")
-            print(output)
             bc.applyKeyState(keystate)
+
+            ''' Debug output '''
+            if debug:
+                if platform.release() in ("Vista", "7", "8", "9", "10"):
+                    os.system("cls")
+                else:
+                    os.system("clear")
+                print(output)
 
             ''' Visualise '''
             if visualise:
@@ -405,6 +410,8 @@ if __name__ == "__main__":
             while pause:
                 if km.is_pressed_once(km.ESC) or not gd.isActive() or not gd.inGame():
                     pause = False
+
+            print(time.time()-time1)
 
         else:
             gd.updateOffGame()
