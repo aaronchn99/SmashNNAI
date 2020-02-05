@@ -1,15 +1,16 @@
 from gamedata import GameDataAPI as gd
 import genInputArray as genI
 
-import platform, os, subprocess
+import platform, os, subprocess, sys
 import cv2
 import numpy as np
 import time
 
 IMG_SIZE = (60,50)
+FRAMEINT = 0.05
 
 debug = False
-FRAMEINT = 0.05
+visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
 
 # Visualise controller
 def showController(pressedButtons):
@@ -46,14 +47,15 @@ if __name__ == "__main__":
             NNinput = genI.genInput()
 
             ''' Visualise '''
-            dataview = NNinput.view()
-            dataview = np.concatenate((dataview[90:3090],dataview[:90],dataview[3090:3094]))
-            for i in range(dataview.size % IMG_SIZE[0], IMG_SIZE[0]):
-                dataview = np.append(dataview, 0)
-            view = np.reshape(dataview, (-1,IMG_SIZE[0]))
-            cv2.imshow("inputs", cv2.resize(view, dsize=(view.shape[1]*5, view.shape[0]*5), interpolation=cv2.INTER_AREA))
-            showController(gd.player.pressedButtons)
-            cv2.waitKey(25)
+            if visualise:
+                dataview = NNinput.view()
+                dataview = np.concatenate((dataview[90:3090],dataview[:90],dataview[3090:3094]))
+                for i in range(dataview.size % IMG_SIZE[0], IMG_SIZE[0]):
+                    dataview = np.append(dataview, 0)
+                view = np.reshape(dataview, (-1,IMG_SIZE[0]))
+                cv2.imshow("inputs", cv2.resize(view, dsize=(view.shape[1]*5, view.shape[0]*5), interpolation=cv2.INTER_AREA))
+                showController(gd.player.pressedButtons)
+                cv2.waitKey(25)
 
             if debug:
                 if platform.release() in ("Vista", "7", "8", "9", "10"):
