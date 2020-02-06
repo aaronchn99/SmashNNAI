@@ -237,7 +237,7 @@ if __name__ == "__main__":
             if FRAMEINT - delay > 0:
                 time.sleep(FRAMEINT - delay)
 
-            print(time.time()-time1)
+            # print(time.time()-time1)
 
         else:
             gd.updateOffGame()

@@ -11,6 +11,7 @@ FRAMEINT = 0.05
 
 debug = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
+curDir = os.path.dirname(os.path.realpath(__file__))
 
 # Visualise controller
 def showController(pressedButtons):
@@ -39,12 +40,28 @@ if __name__ == "__main__":
         os.chdir("../SSF2-linux/")
         subprocess.Popen("./SSF2", stderr=subprocess.DEVNULL)
     gd.startAPI()
+    sequence = np.array([])
 
     while gd.isActive():
         if gd.inGame():
             time1 = time.time()
             gd.updateInGame()
             NNinput = genI.genInput()
+            controls = np.array([
+                gd.player.pressedButtons["up"],
+                gd.player.pressedButtons["left"],
+                gd.player.pressedButtons["down"],
+                gd.player.pressedButtons["right"],
+                gd.player.pressedButtons["jump"],
+                gd.player.pressedButtons["dash"],
+                gd.player.pressedButtons["a"],
+                gd.player.pressedButtons["b"],
+                gd.player.pressedButtons["grab"],
+                gd.player.pressedButtons["shield"],
+                gd.player.pressedButtons["taunt"]
+            ])
+            sample = np.array([NNinput, controls])
+            sequence = np.append(sequence, sample)
 
             ''' Visualise '''
             if visualise:
@@ -68,8 +85,11 @@ if __name__ == "__main__":
             if FRAMEINT - delay > 0:
                 time.sleep(FRAMEINT - delay)
 
-            print(time.time()-time1)
+            # print(time.time()-time1)
         else:
+            if sequence.size > 0:
+                np.savez(os.path.join(curDir,"training","trainData1"), sequence)
+                sequence = np.array([])
             gd.updateOffGame()
             cv2.destroyAllWindows()
     cv2.destroyAllWindows()
