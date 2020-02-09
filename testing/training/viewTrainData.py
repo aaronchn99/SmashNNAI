@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import time
+import time, os, sys
 
 IMG_SIZE = (60,50)
 FRAMEINT = 0.05
@@ -30,7 +30,12 @@ def showData(NNinput):
     view = np.reshape(dataview, (-1,IMG_SIZE[0]))
     cv2.imshow("inputs", cv2.resize(view, dsize=(view.shape[1]*5, view.shape[0]*5), interpolation=cv2.INTER_AREA))
 
-trainData = np.load("../../src/training/trainData.npy", allow_pickle=True)
+try:
+    path = os.path.join("..","..","src","training",sys.argv[1])
+    trainData = np.load(path, allow_pickle=True)
+except:
+    print("Usage: python viewTrainData.py <replay_filename>")
+    quit()
 
 for i in range(0, trainData.shape[0], 2):
     showData(trainData[i])

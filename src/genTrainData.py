@@ -5,6 +5,9 @@ import platform, os, subprocess, sys
 import cv2
 import numpy as np
 import time
+from pynput.keyboard import Key, Controller
+
+kb = Controller()
 
 IMG_SIZE = (60,50)
 FRAMEINT = 0.05
@@ -12,6 +15,13 @@ FRAMEINT = 0.05
 debug = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
 curDir = os.path.dirname(os.path.realpath(__file__))
+replayPath = os.path.join("..", "Replays")
+# Get list of replay files
+replays = os.listdir(replayPath)
+replays.remove("processed")
+if len(replays) == 0:
+    print("Error: No unprocessed replays found")
+    quit()
 
 # Visualise controller
 def showController(pressedButtons):
@@ -29,6 +39,49 @@ def showController(pressedButtons):
     control_view[3][7] = 0.5+0.5*pressedButtons["b"]
     cv2.imshow("controls", cv2.resize(control_view, dsize=(control_view.shape[1]*20, control_view.shape[0]*20), interpolation=cv2.INTER_AREA))
 
+''' File operations '''
+# Complete replay by saving training sequence to file and moving replay to processed folder
+def completeReplay(sequence, replay_file):
+    # Save sequence
+    name = replay_file.split(".")[0]
+    np.save(os.path.join(curDir,"training",name), sequence)
+    # Moves replay file to processed folder
+    os.replace(os.path.join(replayPath, replay_file),
+        os.path.join(replayPath, "processed", replay_file)
+    )
+
+key_int = 0.1
+# Start replaying
+def startReplay(replay_file):
+    for i in range(3):
+        kb.press("p")
+        time.sleep(key_int)
+        kb.release("p")
+        time.sleep(key_int)
+    time.sleep(10*key_int)
+    kb.press("s")
+    time.sleep(key_int)
+    kb.release("s")
+    time.sleep(key_int)
+    kb.press("d")
+    time.sleep(key_int)
+    kb.release("d")
+    time.sleep(key_int)
+    nextReplay(replay_file)
+
+# Procedure to load next replay on SSF2
+def nextReplay(replay_file):
+    for i in range(2):
+        kb.press("p")
+        time.sleep(key_int)
+        kb.release("p")
+        time.sleep(key_int)
+    time.sleep(10*key_int)
+    kb.type(replay_file)
+    time.sleep(key_int)
+    kb.press(Key.enter)
+    time.sleep(key_int)
+
 
 if __name__ == "__main__":
     print("Waiting for SSF2 to connect")
@@ -42,6 +95,9 @@ if __name__ == "__main__":
     gd.startAPI()
     sequence = np.array([])
 
+    time.sleep(10)
+    currReplay = replays[0]
+    startReplay(currReplay)
     while gd.isActive():
         if gd.inGame():
             time1 = time.time()
@@ -88,9 +144,22 @@ if __name__ == "__main__":
             # print(time.time()-time1)
         else:
             if sequence.size > 0:
-                np.savez(os.path.join(curDir,"training","trainData1"), sequence)
+                # Complete the current replay
+                completeReplay(sequence, currReplay)
                 sequence = np.array([])
+                replays.pop(0)
+                # Select next replay if there are more unprocessed replays
+                if len(replays) > 0:
+                    currReplay = replays[0]
+                    kb.press("p")
+                    time.sleep(key_int)
+                    kb.release("p")
+                    time.sleep(key_int)
+                    nextReplay(currReplay)
+                else:   # Exit program loop if no more replays
+                    break
             gd.updateOffGame()
             cv2.destroyAllWindows()
+    gd.stopAPI()
     cv2.destroyAllWindows()
     genI.cleanup()
