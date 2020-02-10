@@ -135,6 +135,9 @@ if __name__ == "__main__":
         metrics=['accuracy']
     )
 
+    if len(os.listdir("model_state")) == 0:
+        NNmodel.save_weights(os.path.join("model_state", "state"))
+    NNmodel.load_weights(os.path.join("model_state", "state"))
 
     while gd.isActive():
 

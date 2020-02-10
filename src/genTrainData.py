@@ -41,10 +41,11 @@ def showController(pressedButtons):
 
 ''' File operations '''
 # Complete replay by saving training sequence to file and moving replay to processed folder
-def completeReplay(sequence, replay_file):
+def completeReplay(x_sequence, y_sequence, replay_file):
     # Save sequence
     name = replay_file.split(".")[0]
-    np.save(os.path.join(curDir,"training",name), sequence)
+    np.save(os.path.join(curDir,"training",name+"X"), x_sequence)
+    np.save(os.path.join(curDir,"training",name+"Y"), y_sequence)
     # Moves replay file to processed folder
     os.replace(os.path.join(replayPath, replay_file),
         os.path.join(replayPath, "processed", replay_file)
@@ -93,7 +94,8 @@ if __name__ == "__main__":
         os.chdir("../SSF2-linux/")
         subprocess.Popen("./SSF2", stderr=subprocess.DEVNULL)
     gd.startAPI()
-    sequence = np.array([])
+    x_sequence = list()
+    y_sequence = list()
 
     time.sleep(10)
     currReplay = replays[0]
@@ -116,8 +118,8 @@ if __name__ == "__main__":
                 gd.player.pressedButtons["shield"],
                 gd.player.pressedButtons["taunt"]
             ])
-            sample = np.array([NNinput, controls])
-            sequence = np.append(sequence, sample)
+            x_sequence.append(NNinput)
+            y_sequence.append(controls)
 
             ''' Visualise '''
             if visualise:
@@ -143,10 +145,11 @@ if __name__ == "__main__":
 
             # print(time.time()-time1)
         else:
-            if sequence.size > 0:
+            if len(x_sequence) > 0:
                 # Complete the current replay
-                completeReplay(sequence, currReplay)
-                sequence = np.array([])
+                completeReplay(np.asarray(x_sequence), np.asarray(y_sequence), currReplay)
+                x_sequence = list()
+                y_sequence = list()
                 replays.pop(0)
                 # Select next replay if there are more unprocessed replays
                 if len(replays) > 0:
