@@ -2,6 +2,7 @@ from gamedata import GameDataAPI as gd
 from controller import BasicController as bc
 from controller import keymonitor as km
 import genInputArray as genI
+from model import models as mdl
 
 import math as m
 import sys, os, platform, subprocess, time
@@ -18,12 +19,12 @@ FRAMEINT = 0.05     # Delay between each tick
 ''' Control variables '''
 pause = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
-NNmode = 2  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
-debug = False   # Debug mode
+NNmode = 1  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
+debug = True   # Debug mode
 
 ''' Hyperparameters '''
 input_width = 3094
-hidden_layers = [2048, 1024, 128]
+hidden_layers = [1024, 128]
 output_width = 11
 # Data type of tensorflow layers and tensors
 tf_dtype = tf.float32
@@ -62,82 +63,15 @@ if __name__ == "__main__":
 
 
     ''' Vanilla NN mode '''
-    NNmodel = keras.models.Sequential()
     if NNmode == 0:
-        NNmodel.add(keras.layers.Dense(
-            hidden_layers[0],
-            input_shape=(input_width,),
-            activation="relu",
-            use_bias=True,
-            dtype=tf_dtype
-        ))
-        # Build the rest of the Feed-Forward NN
-        for l in range(len(hidden_layers)-1):
-            NNmodel.add(keras.layers.Dense(
-                hidden_layers[l+1],
-                input_shape=(hidden_layers[l],),
-                activation="relu",
-                use_bias=True,
-                dtype=tf_dtype
-            ))
-        NNmodel.add(keras.layers.Dense(output_width, input_shape=(hidden_layers[-1],), activation="sigmoid", use_bias=True, dtype=tf_dtype))
+        NNmodel = mdl.FFNet(input_width, hidden_layers, output_width, "ffmodel")
         ''' RNN mode '''
     elif NNmode == 1:
-        NNmodel.add(keras.layers.SimpleRNN(
-            hidden_layers[0],
-            name="rnn_input",
-            batch_input_shape=(1,1,input_width),
-            stateful=True,
-            return_sequences=True,
-            activation="relu",
-            use_bias=True,
-            dtype=tf_dtype
-        ))
-        # Build the rest of the Feed-Forward NN
-        for l in range(len(hidden_layers)-1):
-            NNmodel.add(keras.layers.SimpleRNN(
-                hidden_layers[l+1],
-                name="rnn"+str(l),
-                stateful=True,
-                return_sequences=True,
-                activation="relu",
-                use_bias=True,
-                dtype=tf_dtype
-            ))
-        NNmodel.add(keras.layers.Dense(output_width, name="rnn_output", activation="sigmoid", use_bias=True, dtype=tf_dtype))
+        NNmodel = mdl.RNNet(input_width, hidden_layers, output_width, 1, name="rnnmodel")
         ''' LSTM mode '''
     elif NNmode == 2:
-        NNmodel.add(keras.layers.LSTM(
-            hidden_layers[0],
-            name="lstm_input",
-            batch_input_shape=(1,1,input_width),
-            stateful=True,
-            return_sequences=True,
-            activation="relu",
-            use_bias=True,
-            dtype=tf_dtype
-        ))
-        # Build the rest of the Feed-Forward NN
-        for l in range(len(hidden_layers)-1):
-            NNmodel.add(keras.layers.LSTM(
-                hidden_layers[l+1],
-                name="lstm"+str(l),
-                stateful=True,
-                return_sequences=True,
-                activation="relu",
-                use_bias=True,
-                dtype=tf_dtype
-            ))
-        NNmodel.add(keras.layers.Dense(output_width, name="lstm_output", activation="sigmoid", use_bias=True, dtype=tf_dtype))
-    # Build Model with training settings
-    NNmodel.compile(optimizer='adam',
-        loss='categorical_crossentropy',
-        metrics=['accuracy']
-    )
-
-    if len(os.listdir("model_state")) == 0:
-        NNmodel.save_weights(os.path.join("model_state", "state"))
-    NNmodel.load_weights(os.path.join("model_state", "state"))
+        NNmodel = mdl.LSTMNet(input_width, hidden_layers, output_width, 1, name="lstmmodel")
+    NNmodel.load()
 
     while gd.isActive():
 
@@ -148,13 +82,7 @@ if __name__ == "__main__":
             dataview = NNinput.view()
 
             ''' Feed forward inputs '''
-            # Vanilla
-            if NNmode == 0:
-                NNinput = np.reshape(NNinput, (1,-1))   # Reshape input to 2D array (1 sample, features)
-            # RNN and LSTM
-            elif NNmode == 1 or NNmode == 2:
-                NNinput = np.reshape(NNinput, (1, 1,-1))   # Reshape input to (1 sample, 1 timestep, features)
-            output = np.reshape(NNmodel.predict(NNinput), (-1,))    # Feed forward and reshape output into 1D array
+            output = NNmodel.predict(NNinput)    # Feed forward and reshape output into 1D array
 
             ''' Apply game inputs '''
             # Press key if corresponding output is past threshold
