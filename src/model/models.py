@@ -7,7 +7,8 @@ import os
 OUT_THRESH = 0.5
 # Data type of tensorflow layers and tensors
 tf_dtype = tf.float32
-savePath = os.path.join("..","model_state")
+srcDir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+savePath = os.path.join(srcDir,"model_state")
 
 
 class NNet():
@@ -31,7 +32,8 @@ class NNet():
         try:
             self.model.load_weights(os.path.join(savePath, self.name, self.name))
             return True
-        except:
+        except BaseException as e:
+            print(str(e))
             return False
 
     def train(self, train_x, train_y, valid_set, batch_size, epochs):
@@ -185,48 +187,48 @@ if __name__ == "__main__":
     hidden_layers = [1024,128]
     output_width = 11
 
-    # train_x = np.load("../training/meta_knightvsmario_finaldestX.npy", allow_pickle=True)
-    # train_y = np.load("../training/meta_knightvsmario_finaldestY.npy", allow_pickle=True)
+    train_x = np.load("../training/meta_knightvsmario_finaldestX.npy", allow_pickle=True)
+    train_y = np.load("../training/meta_knightvsmario_finaldestY.npy", allow_pickle=True)
     # train_x = np.reshape(train_x, (1, len(train_x), input_width))
     # train_y = np.reshape(train_y, (1, len(train_y), output_width))
-    # NNmodel = LSTMNet(input_width, hidden_layers, output_width, len(train_x[0]), name="lstmmodel")
+    NNmodel = FFNet(input_width, hidden_layers, output_width, name="ffmodel")
+    NNmodel.load()
+    NNmodel.train(
+        train_x, train_y, len(train_x)
+    )
+    NNmodel.save()
+
+    # train_x = np.load("../training/meta_knightvsmario_finaldest1X.npy", allow_pickle=True)
+    # train_y = np.load("../training/meta_knightvsmario_finaldest1Y.npy", allow_pickle=True)
+    # train_x = np.reshape(train_x, (1, len(train_x), input_width))
+    # train_y = np.reshape(train_y, (1, len(train_y), output_width))
+    # NNmodel = RNNet(input_width, hidden_layers, output_width, len(train_x[0]), name="rnnmodel")
     # NNmodel.load()
     # NNmodel.train(
     #     train_x, train_y
     # )
     # NNmodel.save()
 
-    train_x = np.load("../training/meta_knightvsmario_finaldest1X.npy", allow_pickle=True)
-    train_y = np.load("../training/meta_knightvsmario_finaldest1Y.npy", allow_pickle=True)
-    train_x = np.reshape(train_x, (1, len(train_x), input_width))
-    train_y = np.reshape(train_y, (1, len(train_y), output_width))
-    NNmodel = LSTMNet(input_width, hidden_layers, output_width, len(train_x[0]), name="lstmmodel")
-    NNmodel.load()
-    NNmodel.train(
-        train_x, train_y
-    )
-    NNmodel.save()
-
-    test_x = np.load("../training/meta_knightvssora_warioincX.npy", allow_pickle=True)
-    test_y = np.load("../training/meta_knightvssora_warioincY.npy", allow_pickle=True)
-    NNmodel = LSTMNet(input_width, hidden_layers, output_width, 1, name="lstmmodel")
-    NNmodel.load()
-    correct = 0
-    for i in range(len(test_x)):
-        test_yh = NNmodel.predict(test_x[i])
-        test_yh = [
-            test_yh[0] > OUT_THRESH,
-            test_yh[1] > OUT_THRESH,
-            test_yh[2] > OUT_THRESH,
-            test_yh[3] > OUT_THRESH,
-            test_yh[4] > OUT_THRESH,
-            test_yh[5] > OUT_THRESH,
-            test_yh[6] > OUT_THRESH,
-            test_yh[7] > OUT_THRESH,
-            test_yh[8] > OUT_THRESH,
-            test_yh[9] > OUT_THRESH,
-            test_yh[10] > OUT_THRESH
-        ]
-        if test_yh == list(test_y[i]):
-            correct += 1
-    print("Accuracy:", correct/len(test_y))
+    # test_x = np.load("../training/meta_knightvssora_warioincX.npy", allow_pickle=True)
+    # test_y = np.load("../training/meta_knightvssora_warioincY.npy", allow_pickle=True)
+    # NNmodel = RNNet(input_width, hidden_layers, output_width, 1, name="rnnmodel")
+    # NNmodel.load()
+    # correct = 0
+    # for i in range(len(test_x)):
+    #     test_yh = NNmodel.predict(test_x[i])
+    #     test_yh = [
+    #         test_yh[0] > OUT_THRESH,
+    #         test_yh[1] > OUT_THRESH,
+    #         test_yh[2] > OUT_THRESH,
+    #         test_yh[3] > OUT_THRESH,
+    #         test_yh[4] > OUT_THRESH,
+    #         test_yh[5] > OUT_THRESH,
+    #         test_yh[6] > OUT_THRESH,
+    #         test_yh[7] > OUT_THRESH,
+    #         test_yh[8] > OUT_THRESH,
+    #         test_yh[9] > OUT_THRESH,
+    #         test_yh[10] > OUT_THRESH
+    #     ]
+    #     if test_yh == list(test_y[i]):
+    #         correct += 1
+    # print("Accuracy:", correct/len(test_y))
