@@ -10,7 +10,7 @@ WHITE = (255,255,255)
 BLACK = (0,0,0)
 
 ''' Control constants '''
-IMG_SIZE = (60,50)
+IMG_SIZE = (10,10)
 INVGAPSIZE = 14    # Inverse of player to opponent gap size (Low => Longer gap, High => Shorter gap)
 np_dtype = np.float32   # Data type of input array (Matches with Tensor data type)
 
@@ -19,17 +19,32 @@ def getImg():
     stageRes = (gd.cambounds()["x1"], gd.cambounds()["y1"])
 
     ''' Player to platforms image '''
+    # Calculate offset to center on player
+    player_center = pygame.Rect(gd.player.pos, gd.player.dim).center
+    stage_center = (stageRes[0]/2,stageRes[1]/2)
+    player_offset = (player_center[0]-stage_center[0], player_center[1]-stage_center[1])
     # Create surfaces for drawing platforms and characters
     plat_img = pygame.Surface(stageRes)
     # Empty space is black
     plat_img.fill(BLACK)
     # Draw platforms for plat_img
     for t in gd.terrain():
-        plat_img.blit(t.img, t.pos)
+        plat_img.blit(t.img, (t.pos[0]-player_offset[0], t.pos[1]-player_offset[1]))
     for p in gd.platforms():
-        pygame.draw.rect(plat_img, WHITE, pygame.Rect(p["x"],p["y"],p["w"],p["h"]))
+        pygame.draw.rect(plat_img, WHITE, pygame.Rect(p["x"]-player_offset[0],p["y"]-player_offset[1],p["w"],p["h"]))
     # Draw player in plat_img
-    pygame.draw.rect(plat_img, (128, 128, 128), pygame.Rect(gd.player.pos, gd.player.dim))
+    pygame.draw.rect(
+        plat_img, (128, 128, 128),
+        pygame.Rect((gd.player.pos[0]-player_offset[0],gd.player.pos[1]-player_offset[1]),
+        gd.player.dim)
+    )
+    #
+    crop_area = (IMG_SIZE[0]*gd.player.dim[0],IMG_SIZE[1]*gd.player.dim[1])
+    crop_rect = pygame.Rect((0,0), crop_area)
+    crop_rect.center = stage_center
+    cropped_plat_img = pygame.Surface(crop_area)
+    cropped_plat_img.blit(plat_img, (0,0), crop_rect)
+    plat_img = cropped_plat_img
     # Scale images to fit required dimensions
     plat_img = pygame.transform.scale(plat_img, IMG_SIZE)
     # Normalise pixel values to 0.0 - 1.0 range

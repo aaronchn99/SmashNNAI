@@ -1,2 +1,5 @@
 
 *.pyc
+*.ssfrec
+*.npy
+src/model_state

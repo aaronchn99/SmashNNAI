@@ -9,7 +9,7 @@ from pynput.keyboard import Key, Controller
 
 kb = Controller()
 
-IMG_SIZE = (60,50)
+IMG_SIZE = (10,10)
 FRAMEINT = 0.05
 
 debug = False
@@ -41,11 +41,12 @@ def showController(pressedButtons):
 
 ''' File operations '''
 # Complete replay by saving training sequence to file and moving replay to processed folder
-def completeReplay(x_sequence, y_sequence, replay_file):
+def completeReplay(x_sequence, y_sequence, batch_sequence, replay_file):
     # Save sequence
     name = replay_file.split(".")[0]
     np.save(os.path.join(curDir,"training",name+"X"), x_sequence)
     np.save(os.path.join(curDir,"training",name+"Y"), y_sequence)
+    np.save(os.path.join(curDir,"training",name+"batseq"), batch_sequence)
     # Moves replay file to processed folder
     os.replace(os.path.join(replayPath, replay_file),
         os.path.join(replayPath, "processed", replay_file)
@@ -96,6 +97,8 @@ if __name__ == "__main__":
     gd.startAPI()
     x_sequence = list()
     y_sequence = list()
+    batch_sequence = list()
+    batch_start = None
 
     time.sleep(10)
     currReplay = replays[0]
@@ -118,13 +121,21 @@ if __name__ == "__main__":
                 gd.player.pressedButtons["shield"],
                 gd.player.pressedButtons["taunt"]
             ])
-            x_sequence.append(NNinput)
-            y_sequence.append(controls)
+            if np.any(controls):
+                if batch_start is None:
+                    batch_start = len(x_sequence)
+                x_sequence.append(NNinput)
+                y_sequence.append(controls)
+            else:
+                if batch_start is not None:
+                    batch_sequence.append([batch_start, len(x_sequence)])
+                    batch_start = None
+
 
             ''' Visualise '''
             if visualise:
                 dataview = NNinput.view()
-                dataview = np.concatenate((dataview[90:3090],dataview[:90],dataview[3090:3094]))
+                dataview = np.concatenate((dataview[90:190],dataview[:90],dataview[190:194]))
                 for i in range(dataview.size % IMG_SIZE[0], IMG_SIZE[0]):
                     dataview = np.append(dataview, 0)
                 view = np.reshape(dataview, (-1,IMG_SIZE[0]))
@@ -147,9 +158,14 @@ if __name__ == "__main__":
         else:
             if len(x_sequence) > 0:
                 # Complete the current replay
-                completeReplay(np.asarray(x_sequence), np.asarray(y_sequence), currReplay)
+                completeReplay(
+                    np.asarray(x_sequence), np.asarray(y_sequence),
+                    np.asarray(batch_sequence), currReplay
+                )
                 x_sequence = list()
                 y_sequence = list()
+                batch_sequence = list()
+                batch_start = None
                 replays.pop(0)
                 # Select next replay if there are more unprocessed replays
                 if len(replays) > 0:

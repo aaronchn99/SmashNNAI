@@ -12,7 +12,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 ''' Control constants '''
-IMG_SIZE = (60,50)
+IMG_SIZE = (10,10)
 OUT_THRESH = 0.5
 FRAMEINT = 0.05     # Delay between each tick
 
@@ -23,11 +23,9 @@ NNmode = 1  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
 debug = True   # Debug mode
 
 ''' Hyperparameters '''
-input_width = 3094
-hidden_layers = [1024, 128]
+input_width = 194
+hidden_layers = [150, 128, 50]
 output_width = 11
-# Data type of tensorflow layers and tensors
-tf_dtype = tf.float32
 
 # Visualise controller
 def showController(pressedButtons):
@@ -64,13 +62,13 @@ if __name__ == "__main__":
 
     ''' Vanilla NN mode '''
     if NNmode == 0:
-        NNmodel = mdl.FFNet(input_width, hidden_layers, output_width, "ffmodel")
+        NNmodel = mdl.FFNet(input_width, hidden_layers, output_width)
         ''' RNN mode '''
     elif NNmode == 1:
-        NNmodel = mdl.RNNet(input_width, hidden_layers, output_width, 1, name="rnnmodel")
+        NNmodel = mdl.RNNet(input_width, hidden_layers, output_width, 1)
         ''' LSTM mode '''
     elif NNmode == 2:
-        NNmodel = mdl.LSTMNet(input_width, hidden_layers, output_width, 1, name="lstmmodel")
+        NNmodel = mdl.LSTMNet(input_width, hidden_layers, output_width, 1)
     NNmodel.load()
 
     while gd.isActive():
@@ -112,7 +110,7 @@ if __name__ == "__main__":
             ''' Visualise '''
             if visualise:
                 ''' Show inputs '''
-                dataview = np.concatenate((dataview[90:3090],dataview[:90],dataview[3090:3094]))
+                dataview = np.concatenate((dataview[90:190],dataview[:90],dataview[190:194]))
                 for i in range(dataview.size % IMG_SIZE[0], IMG_SIZE[0]):
                     dataview = np.append(dataview, 0)
                 view = np.reshape(dataview, (-1,IMG_SIZE[0]))

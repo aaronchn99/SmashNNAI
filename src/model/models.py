@@ -10,6 +10,35 @@ tf_dtype = tf.float32
 srcDir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 savePath = os.path.join(srcDir,"model_state")
 
+''' Custom activation functions '''
+# x is a tensor input
+def leaky_relu(x):
+    return tf.nn.leaky_relu(x, alpha=0.5)
+
+''' Custom layers '''
+# class ThresholdOutput(keras.layers.Layer):
+#
+#     def __init__(self):
+#         super(ThresholdOutput, self).__init__()
+#
+#     def build(self, input_shape):
+#         self.b = self.add_weight(
+#             shape=(input_shape[-1],),
+#             initializer="zeros",
+#             trainable=True
+#         )
+#
+#     def call(self, inputs):
+#         print("Ho")
+#         if (inputs + self.b) > 0:
+#             return 1.0
+#         else:
+#             return 0.0
+#
+#     def compute_output_shape(self, input_shape):
+#         print("Hello")
+#         return (input_shape[0],)
+
 
 class NNet():
 
@@ -20,7 +49,8 @@ class NNet():
         self.output_width = output_width
 
     def compileModel(self):
-        self.model.compile(optimizer='adam',
+        self.model.compile(
+            optimizer='adam',
             loss='binary_crossentropy',
             metrics=['accuracy']
         )
@@ -55,7 +85,7 @@ class FFNet(NNet):
         self.model.add(keras.layers.Dense(
             hidden_layers[0],
             input_shape=(input_width,),
-            activation="tanh",
+            activation=leaky_relu,
             use_bias=True,
             dtype=tf_dtype
         ))
@@ -64,7 +94,7 @@ class FFNet(NNet):
             self.model.add(keras.layers.Dense(
                 hidden_layers[l+1],
                 input_shape=(hidden_layers[l],),
-                activation="tanh",
+                activation=leaky_relu,
                 use_bias=True,
                 dtype=tf_dtype
             ))
@@ -75,6 +105,7 @@ class FFNet(NNet):
             use_bias=True,
             dtype=tf_dtype)
         )
+        # self.model.add(ThresholdOutput())
         super().compileModel()
 
     # Params:
@@ -99,13 +130,16 @@ class RNNet(NNet):
     def __init__(self, input_width, hidden_layers, output_width,
                 sequence_length, batch_size=1, name="RNNet"):
         super().createModel(name, input_width, output_width)
+        self.model.add(keras.layers.Masking(
+            mask_value=0.0,
+            batch_input_shape=(batch_size, sequence_length, input_width)
+        ))
         self.model.add(keras.layers.SimpleRNN(
             hidden_layers[0],
             name="rnn_input",
-            batch_input_shape=(batch_size, sequence_length, input_width),
             stateful=True,
             return_sequences=True,
-            activation="tanh",
+            activation=leaky_relu,
             use_bias=True,
             dtype=tf_dtype
         ))
@@ -116,7 +150,7 @@ class RNNet(NNet):
                 name="rnn"+str(l),
                 stateful=True,
                 return_sequences=True,
-                activation="tanh",
+                activation=leaky_relu,
                 use_bias=True,
                 dtype=tf_dtype
             ))
@@ -143,10 +177,13 @@ class LSTMNet(NNet):
     def __init__(self, input_width, hidden_layers, output_width,
                 sequence_length, batch_size=1, name="LSTMNet"):
         super().createModel(name, input_width, output_width)
+        self.model.add(keras.layers.Masking(
+            mask_value=0.0,
+            batch_input_shape=(batch_size, sequence_length, input_width)
+        ))
         self.model.add(keras.layers.LSTM(
             hidden_layers[0],
             name="lstm_input",
-            batch_input_shape=(batch_size, sequence_length, input_width),
             stateful=True,
             return_sequences=True,
             activation="tanh",
@@ -183,18 +220,18 @@ class LSTMNet(NNet):
 
 
 if __name__ == "__main__":
-    input_width = 3094
-    hidden_layers = [1024,128]
+    input_width = 94
+    hidden_layers = [72, 50]
     output_width = 11
 
     train_x = np.load("../training/meta_knightvsmario_finaldestX.npy", allow_pickle=True)
     train_y = np.load("../training/meta_knightvsmario_finaldestY.npy", allow_pickle=True)
     # train_x = np.reshape(train_x, (1, len(train_x), input_width))
     # train_y = np.reshape(train_y, (1, len(train_y), output_width))
-    NNmodel = FFNet(input_width, hidden_layers, output_width, name="ffmodel")
+    NNmodel = FFNet(input_width, hidden_layers, output_width)
     NNmodel.load()
     NNmodel.train(
-        train_x, train_y, len(train_x)
+        train_x, train_y, len(train_x), epochs=100
     )
     NNmodel.save()
 
