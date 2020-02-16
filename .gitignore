@@ -1,5 +1,5 @@
 
 *.pyc
-Replays/
-src/model_state
-src/training
+Replays/*
+src/model_state/*
+src/training/*

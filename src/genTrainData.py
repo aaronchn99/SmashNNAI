@@ -14,6 +14,7 @@ FRAMEINT = 0.05
 
 debug = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
+isWinOS = platform.release() in ("Vista", "7", "8", "9", "10")
 curDir = os.path.dirname(os.path.realpath(__file__))
 replayPath = os.path.join("..", "Replays")
 # Get list of replay files
@@ -51,6 +52,7 @@ def completeReplay(x_sequence, y_sequence, batch_sequence, replay_file):
     os.replace(os.path.join(replayPath, replay_file),
         os.path.join(replayPath, "processed", replay_file)
     )
+    print("Saved")
 
 key_int = 0.1
 # Start replaying
@@ -79,10 +81,27 @@ def nextReplay(replay_file):
         kb.release("p")
         time.sleep(key_int)
     time.sleep(10*key_int)
+    if not isWinOS:
+        replay_full_path = os.path.join(os.path.dirname(curDir), "Replays")
+        kb.press(Key.down)
+        time.sleep(key_int)
+        kb.release(Key.down)
+        time.sleep(key_int)
+        kb.type(replay_full_path)
+        time.sleep(key_int)
+        kb.press(Key.enter)
+        time.sleep(key_int)
+        kb.release(Key.enter)
+        time.sleep(key_int)
+        kb.press(Key.down)
+        time.sleep(key_int)
+        kb.release(Key.down)
+        time.sleep(key_int)
     kb.type(replay_file)
     time.sleep(key_int)
     kb.press(Key.enter)
     time.sleep(key_int)
+    kb.release(Key.enter)
 
 
 if __name__ == "__main__":
@@ -130,6 +149,7 @@ if __name__ == "__main__":
                 if batch_start is not None:
                     batch_sequence.append([batch_start, len(x_sequence)])
                     batch_start = None
+            print(len(x_sequence), len(y_sequence), len(batch_sequence))
 
 
             ''' Visualise '''
@@ -144,7 +164,7 @@ if __name__ == "__main__":
                 cv2.waitKey(25)
 
             if debug:
-                if platform.release() in ("Vista", "7", "8", "9", "10"):
+                if isWinOS:
                     os.system("cls")
                 else:
                     os.system("clear")
@@ -157,6 +177,7 @@ if __name__ == "__main__":
             # print(time.time()-time1)
         else:
             if len(x_sequence) > 0:
+                print("Done")
                 # Complete the current replay
                 completeReplay(
                     np.asarray(x_sequence), np.asarray(y_sequence),
