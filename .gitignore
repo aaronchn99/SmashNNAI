@@ -1,5 +1,5 @@
 
 *.pyc
-*.ssfrec
-*.npy
+Replays/
 src/model_state
+src/training
