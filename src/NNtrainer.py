@@ -8,7 +8,7 @@ from model import models as mdl
 OUT_THRESH = 0.5
 NNmode = 1
 trainDir = "training"
-epochs = 1000
+epochs = 100
 
 ''' Hyperparameters '''
 input_width = 194

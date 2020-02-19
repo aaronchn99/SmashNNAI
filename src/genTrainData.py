@@ -118,6 +118,8 @@ if __name__ == "__main__":
     y_sequence = list()
     batch_sequence = list()
     batch_start = None
+    idle_sequence = list()
+    IDLE_INT = 10
 
     time.sleep(10)
     currReplay = replays[0]
@@ -140,15 +142,26 @@ if __name__ == "__main__":
                 gd.player.pressedButtons["shield"],
                 gd.player.pressedButtons["taunt"]
             ])
+            # Not idle, continue adding to batch
             if np.any(controls):
+                # Start a new batch
                 if batch_start is None:
                     batch_start = len(x_sequence)
+                # Add idle frames if non-empty
+                while len(idle_sequence) > 0:
+                    x_sequence.append(idle_sequence[0][0])
+                    y_sequence.append(idle_sequence[0][1])
+                    idle_sequence.pop(0)
                 x_sequence.append(NNinput)
                 y_sequence.append(controls)
             else:
                 if batch_start is not None:
-                    batch_sequence.append([batch_start, len(x_sequence)])
-                    batch_start = None
+                    idle_sequence.append([NNinput, controls])
+                    # Add batch index range, if idle long enough
+                    if len(idle_sequence) > IDLE_INT:
+                        batch_sequence.append([batch_start, len(x_sequence)])
+                        batch_start = None
+                        idle_sequence = list()
             print(len(x_sequence), len(y_sequence), len(batch_sequence))
 
 
@@ -177,6 +190,7 @@ if __name__ == "__main__":
             # print(time.time()-time1)
         else:
             if len(x_sequence) > 0:
+                time.sleep(35)
                 print("Done")
                 # Complete the current replay
                 completeReplay(
@@ -191,10 +205,6 @@ if __name__ == "__main__":
                 # Select next replay if there are more unprocessed replays
                 if len(replays) > 0:
                     currReplay = replays[0]
-                    kb.press("p")
-                    time.sleep(key_int)
-                    kb.release("p")
-                    time.sleep(key_int)
                     nextReplay(currReplay)
                 else:   # Exit program loop if no more replays
                     break
