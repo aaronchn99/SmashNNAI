@@ -19,7 +19,7 @@ FRAMEINT = 0.05     # Delay between each tick
 ''' Control variables '''
 pause = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
-NNmode = 1  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
+NNmode = 0  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
 debug = True   # Debug mode
 
 ''' Hyperparameters '''
@@ -59,21 +59,11 @@ if __name__ == "__main__":
     # Keyboard listener
     keylistener = km.start_listener()
 
-
-    ''' Vanilla NN mode '''
-    if NNmode == 0:
-        NNmodel = mdl.FFNet(input_width, hidden_layers, output_width)
-        ''' RNN mode '''
-    elif NNmode == 1:
-        NNmodel = mdl.RNNet(input_width, hidden_layers, output_width, 1)
-        ''' LSTM mode '''
-    elif NNmode == 2:
-        NNmodel = mdl.LSTMNet(input_width, hidden_layers, output_width, 1)
-    NNmodel.load()
-
+    init = False
     while gd.isActive():
 
         if gd.inGame():
+            init = False
             time1 = time.time() # Set time before processing
             gd.updateInGame()
             NNinput = genI.genInput()    # Get data array to feed into NN model
@@ -105,7 +95,17 @@ if __name__ == "__main__":
                     os.system("cls")
                 else:
                     os.system("clear")
-                print(output)
+                print("Up\t", output[0]*100)
+                print("Left\t", output[1]*100)
+                print("Down\t", output[2]*100)
+                print("Right\t", output[3]*100, "\n")
+                print("Jump\t", output[4]*100)
+                print("Dash\t", output[5]*100, "\n")
+                print("A\t", output[6]*100)
+                print("B\t", output[7]*100, "\n")
+                print("Grab\t", output[8]*100)
+                print("Shield\t", output[9]*100)
+                print("Taunt\t", output[10]*100)
 
             ''' Visualise '''
             if visualise:
@@ -169,6 +169,19 @@ if __name__ == "__main__":
             # print(time.time()-time1)
 
         else:
+            if not init:
+                ''' Vanilla NN mode '''
+                if NNmode == 0:
+                    NNmodel = mdl.FFNet(input_width, hidden_layers, output_width)
+                    ''' RNN mode '''
+                elif NNmode == 1:
+                    NNmodel = mdl.RNNet(input_width, hidden_layers, output_width, 1)
+                    ''' LSTM mode '''
+                elif NNmode == 2:
+                    NNmodel = mdl.LSTMNet(input_width, hidden_layers, output_width, 1)
+                NNmodel.load()
+                init = True
+
             gd.updateOffGame()
             bc.resetKeyState()
             cv2.destroyAllWindows()

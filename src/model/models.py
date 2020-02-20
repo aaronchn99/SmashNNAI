@@ -219,21 +219,21 @@ class LSTMNet(NNet):
         return super().predict(input)
 
 
-if __name__ == "__main__":
-    input_width = 94
-    hidden_layers = [72, 50]
-    output_width = 11
+# if __name__ == "__main__":
+    # input_width = 94
+    # hidden_layers = [72, 50]
+    # output_width = 11
 
-    train_x = np.load("../training/meta_knightvsmario_finaldestX.npy", allow_pickle=True)
-    train_y = np.load("../training/meta_knightvsmario_finaldestY.npy", allow_pickle=True)
+    # train_x = np.load("../training/meta_knightvsmario_finaldestX.npy", allow_pickle=True)
+    # train_y = np.load("../training/meta_knightvsmario_finaldestY.npy", allow_pickle=True)
     # train_x = np.reshape(train_x, (1, len(train_x), input_width))
     # train_y = np.reshape(train_y, (1, len(train_y), output_width))
-    NNmodel = FFNet(input_width, hidden_layers, output_width)
-    NNmodel.load()
-    NNmodel.train(
-        train_x, train_y, len(train_x), epochs=100
-    )
-    NNmodel.save()
+    # NNmodel = FFNet(input_width, hidden_layers, output_width)
+    # NNmodel.load()
+    # NNmodel.train(
+    #     train_x, train_y, len(train_x), epochs=100
+    # )
+    # NNmodel.save()
 
     # train_x = np.load("../training/meta_knightvsmario_finaldest1X.npy", allow_pickle=True)
     # train_y = np.load("../training/meta_knightvsmario_finaldest1Y.npy", allow_pickle=True)
