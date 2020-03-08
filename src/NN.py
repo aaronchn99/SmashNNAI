@@ -19,7 +19,7 @@ FRAMEINT = 0.05     # Delay between each tick
 ''' Control variables '''
 pause = False
 visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
-NNmode = 1  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
+NNmode = 0  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
 debug = True   # Debug mode
 
 ''' Hyperparameters '''

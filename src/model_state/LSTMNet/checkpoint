@@ -1,0 +1,2 @@
+model_checkpoint_path: "LSTMNet"
+all_model_checkpoint_paths: "LSTMNet"
