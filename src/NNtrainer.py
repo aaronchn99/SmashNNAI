@@ -6,7 +6,7 @@ import numpy as np
 from model import models as mdl
 
 OUT_THRESH = 0.5
-NNmode = 0
+NNmode = 1
 trainDir = "training"
 epochs = 1000
 

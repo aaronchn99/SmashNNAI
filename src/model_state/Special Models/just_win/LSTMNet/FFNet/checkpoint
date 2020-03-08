@@ -1,0 +1,2 @@
+model_checkpoint_path: "FFNet"
+all_model_checkpoint_paths: "FFNet"
