@@ -18,8 +18,15 @@ FRAMEINT = 0.05     # Delay between each tick
 
 ''' Control variables '''
 pause = False
-visualise = len(sys.argv) >= 2 and int(sys.argv[1]) == 1
-NNmode = 0  # 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
+# 0 - Vanilla mode, 1 - RNN mode, 2 - LSTM mode
+try:
+    NNmode = int(sys.argv[1])
+    if NNmode not in (0, 1, 2):
+        raise Exception
+except Exception:
+    print("Error: Must specify NN model type: 0-FNN, 1-RNN, 2-LSTM")
+    exit(1)
+visualise = len(sys.argv) >= 3 and int(sys.argv[2]) == 1
 debug = True   # Debug mode
 
 ''' Hyperparameters '''
